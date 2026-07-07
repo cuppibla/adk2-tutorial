@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Space+Mono:wght@400;700&display=swap');
+
+:root{
+  --cream:#FBF1E2; --cream2:#F3E6D2; --ink:#4A4036; --muted:#8A7C6A;
+  --blue:#7EA8C9; --blue-b:#5E86A8;
+  --sage:#9DBF8E; --sage-b:#7EA06F;
+  --honey:#EBC468; --honey-b:#C99E3C;
+  --coral:#EC8E76; --coral-b:#CE6C53;
+  --card:#FFFDF8; --line:#D8C7AE;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Nunito',system-ui,sans-serif;color:var(--ink)}
+
+/* each diagram is a 1280x720 slide; :target shows one full-screen for clean PNG export */
+.slide{
+  display:none; width:1280px; height:720px; padding:56px 64px;
+  background:
+    radial-gradient(1200px 700px at 78% -10%, #fff8ec 0%, transparent 60%),
+    var(--cream);
+  position:relative; flex-direction:column;
+}
+.slide:target{display:flex}
+#roadmap:not(:target) ~ #roadmap{}
+/* default: show roadmap if nothing targeted */
+body:not(:has(.slide:target)) #roadmap{display:flex}
+
+/* felt fibre grain */
+.slide::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix type='matrix' values='0 0 0 0 0.55  0 0 0 0 0.48  0 0 0 0 0.38  0 0 0 0.05 0'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>");}
+
+.head{display:flex;align-items:center;gap:16px;margin-bottom:6px;z-index:2}
+.head .bug{width:76px;height:76px;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(120,90,50,.25))}
+.eyebrow{font-family:'Space Mono',monospace;font-size:14px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+h1{font-family:'Fredoka',sans-serif;font-weight:700;font-size:38px;margin:0;line-height:1.05}
+.sub{font-size:17px;color:var(--muted);margin:2px 0 0;font-weight:700}
+.body{flex:1;display:flex;align-items:center;justify-content:center;z-index:2}
+
+/* node cards */
+.node{background:var(--card);border:2.5px solid var(--line);border-radius:18px;
+  padding:14px 20px;text-align:center;box-shadow:0 8px 0 rgba(120,90,50,.08),0 10px 20px rgba(120,90,50,.10);
+  min-width:150px}
+.node .t{font-family:'Space Mono',monospace;font-weight:700;font-size:18px}
+.node .k{font-size:12.5px;color:var(--muted);font-weight:700;margin-top:3px}
+.node.blue{border-color:var(--blue);background:#EEF4FA}
+.node.sage{border-color:var(--sage);background:#EEF4E8}
+.node.honey{border-color:var(--honey);background:#FBF3DC}
+.node.coral{border-color:var(--coral);background:#FCEBE4}
+.node.ink{border-color:#C9BBA6;background:#fff}
+.node.diamond{border-radius:14px;transform:rotate(0)}
+.node.sm{min-width:118px;padding:10px 14px}
+.node.sm .t{font-size:15px}
+.pill{display:inline-block;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;
+  color:#fff;padding:3px 10px;border-radius:999px;margin-bottom:8px}
+.pill.blue{background:var(--blue-b)} .pill.sage{background:var(--sage-b)}
+.pill.honey{background:var(--honey-b)} .pill.coral{background:var(--coral-b)}
+
+.row{display:flex;align-items:center;gap:26px}
+.col{display:flex;flex-direction:column;gap:16px}
+.arrow{color:var(--sage-b);font-size:30px;font-weight:900;line-height:1}
+.arrow.small{font-size:22px}
+.stack{display:flex;flex-direction:column;gap:14px;padding:16px;border:2.5px dashed var(--line);
+  border-radius:22px;background:rgba(255,255,255,.45)}
+.stack .cap{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:center;font-weight:700;letter-spacing:.08em}
+.badge{position:absolute;top:56px;right:64px;font-family:'Space Mono',monospace;font-size:13px;
+  background:#fff;border:2px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:700;color:var(--muted);z-index:3}
+
+/* ROADMAP — three lanes (one per pillar), label on the LEFT so nothing overlaps */
+.lanes{display:flex;flex-direction:column;gap:20px;width:100%;max-width:1120px;margin:0 auto}
+.lane{display:flex;align-items:center;gap:26px;border-radius:26px;padding:20px 30px}
+.lane.g{background:#EAF1F8} .lane.c{background:#EDF4E7} .lane.d{background:#FBF3DC}
+.lane-lab{flex:0 0 176px;font-family:'Space Mono',monospace;font-weight:700;font-size:15px;color:#fff;
+  padding:12px 12px;border-radius:16px;text-align:center;line-height:1.25}
+.lane.g .lane-lab{background:var(--blue-b)} .lane.c .lane-lab{background:var(--sage-b)} .lane.d .lane-lab{background:var(--honey-b)}
+.stops{display:flex;align-items:center;gap:18px}
+.stop{display:flex;flex-direction:column;align-items:center;gap:8px;width:104px;position:relative}
+.dot{width:66px;height:66px;border-radius:50%;background:#fff;border:3px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-family:'Fredoka';font-weight:700;font-size:22px;color:var(--muted);
+  box-shadow:0 6px 0 rgba(120,90,50,.08)}
+.stop .lab{font-size:13.5px;color:var(--muted);font-weight:800;text-align:center;line-height:1.15}
+.stop.done .dot{background:var(--sage);border-color:var(--sage-b);color:#fff}
+.stop.now .dot{background:var(--coral);border-color:var(--coral-b);color:#fff;transform:scale(1.24);
+  box-shadow:0 0 0 6px rgba(236,142,118,.25),0 10px 16px rgba(120,90,50,.2)}
+.stop.now .lab{color:var(--coral-b)}
+.stop.now::before{content:"👋 you are here";position:absolute;top:-34px;white-space:nowrap;
+  font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#fff;background:var(--coral-b);
+  padding:4px 10px;border-radius:999px}
+.connector{width:26px;height:3px;background:var(--line);border-radius:2px;margin-top:33px}
+
+/* ADK 2 brand lockup (top-right, all slides) — big & crisp */
+.brand{position:absolute;top:40px;right:52px;display:flex;align-items:center;gap:12px;z-index:5;
+  background:#fff;border:2.5px solid var(--line);border-radius:999px;padding:9px 24px 9px 14px;
+  box-shadow:0 6px 16px rgba(120,90,50,.16)}
+.brand img{width:50px;height:50px}
+.brand span{font-family:'Fredoka',sans-serif;font-weight:700;font-size:26px;color:var(--ink);letter-spacing:.005em}
+.brand b{font-weight:700;background:linear-gradient(90deg,#4285F4,#34A853 55%,#EA4335);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* Pillar 2 specialist strip (fills the lane + adds info) */
+.spec{display:flex;flex-direction:column;gap:9px;margin-left:4px}
+.spec .cap{font-family:'Space Mono',monospace;font-size:13px;color:var(--muted);font-weight:700}
+.chips{display:flex;gap:9px;flex-wrap:wrap;max-width:640px}
+.chip{font-family:'Nunito',sans-serif;font-weight:800;font-size:14.5px;background:#fff;
+  border:2px solid var(--sage);border-radius:999px;padding:7px 14px;color:var(--sage-b)}
+
+/* table */
+table{border-collapse:separate;border-spacing:0;width:1000px;background:var(--card);
+  border-radius:18px;overflow:hidden;box-shadow:0 12px 26px rgba(120,90,50,.14);font-size:18px}
+th,td{padding:16px 20px;text-align:left;border-bottom:2px solid #F0E6D5}
+th{font-family:'Fredoka';font-size:18px;background:#F6ECDA}
+tr:last-child td{border-bottom:none}
+td .q{font-family:'Space Mono',monospace;font-weight:700}
+.tag{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:#fff;padding:4px 12px;border-radius:999px;white-space:nowrap}
+.tag.blue{background:var(--blue-b)} .tag.sage{background:var(--sage-b)} .tag.honey{background:var(--honey-b)}
+
+.legend{position:absolute;bottom:26px;left:64px;display:flex;gap:18px;font-size:13px;color:var(--muted);font-weight:700;z-index:3}
+.legend b{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.note{font-family:'Space Mono',monospace;font-size:13px;color:var(--muted);margin-top:14px;text-align:center}
+.grp-lab{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:2px;letter-spacing:.06em}
+</style>
+</head>
+<body>
+
+<!-- ============ ROADMAP (you-are-here) ============ -->
+<section class="slide" id="roadmap">
+  <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
+  <div class="head">
+    <img class="bug" src="./felt/mascot-wave.png" alt="">
+    <div><div class="eyebrow">ADK 2 · Marathon Coach</div>
+      <h1>Your Learning Roadmap</h1>
+      <p class="sub">known structure → known team, variable subset → unknown shape → choose</p></div>
+  </div>
+  <div class="body">
+    <div class="lanes">
+      <div class="lane g">
+        <div class="lane-lab">Pillar 1<br>Graph</div>
+        <div class="stops">
+          <div class="stop done"><div class="dot">L0</div><div class="lab">First Agent</div></div>
+          <div class="connector"></div>
+          <div class="stop done"><div class="dot">L1</div><div class="lab">First Workflow</div></div>
+          <div class="connector"></div>
+          <div class="stop done"><div class="dot">L2a</div><div class="lab">Parallel + Join</div></div>
+          <div class="connector"></div>
+          <div class="stop now"><div class="dot">L2b</div><div class="lab">Router</div></div>
+        </div>
+      </div>
+      <div class="lane c">
+        <div class="lane-lab">Pillar 2<br>Collaborative</div>
+        <div class="stops">
+          <div class="stop"><div class="dot">L3</div><div class="lab">Concierge</div></div>
+        </div>
+        <div class="spec">
+          <div class="cap">one coordinator · the request picks the subset</div>
+          <div class="chips">
+            <span class="chip">🩺 medical</span><span class="chip">🌦️ weather</span><span class="chip">⏱️ pacing</span>
+            <span class="chip">🎽 gear</span><span class="chip">🥤 nutrition</span><span class="chip">🧠 mental</span>
+          </div>
+        </div>
+      </div>
+      <div class="lane d">
+        <div class="lane-lab">Pillar 3<br>Dynamic</div>
+        <div class="stops">
+          <div class="stop"><div class="dot">L4a</div><div class="lab">Runtime Width</div></div>
+          <div class="connector"></div>
+          <div class="stop"><div class="dot">L4b</div><div class="lab">Recursion</div></div>
+          <div class="connector"></div>
+          <div class="stop"><div class="dot">🏁</div><div class="lab">L5 · Which Pattern</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="legend"><span><b style="background:var(--sage)"></b>done</span><span><b style="background:var(--coral)"></b>you are here</span><span><b style="background:#fff;border:2px solid var(--line)"></b>up next</span></div>
+</section>
+
+<!-- ============ ARCHITECTURE ============ -->
+<section class="slide" id="arch">
+  <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
+  <div class="head"><img class="bug" src="./felt/mascot-wave.png" alt="">
+    <div><div class="eyebrow">One app · three modes</div><h1>Marathon Race Day Coach — Architecture</h1>
+    <p class="sub">FastAPI + SSE backend · one demo, three orchestration patterns</p></div></div>
+  <div class="body">
+    <div class="col" style="gap:22px;align-items:center">
+      <div class="node ink"><div class="t">Browser UI</div><div class="k">vanilla HTML/CSS/JS · live node events</div></div>
+      <div class="arrow">↓ &nbsp;SSE stream&nbsp; ↑</div>
+      <div class="node ink" style="min-width:280px"><div class="t">server.py</div><div class="k">FastAPI · /run · /chat · /research</div></div>
+      <div class="arrow">↓</div>
+      <div class="row" style="gap:34px;align-items:stretch">
+        <div class="col" style="gap:8px;align-items:center"><span class="pill blue">Pillar 1 · Graph</span>
+          <div class="node blue"><div class="t">Single Runner</div><div class="k">parallel fetch → join → router → strategy</div></div></div>
+        <div class="col" style="gap:8px;align-items:center"><span class="pill sage">Pillar 2 · Collaborative</span>
+          <div class="node sage"><div class="t">Concierge</div><div class="k">coordinator → dynamic subset of 6</div></div></div>
+        <div class="col" style="gap:8px;align-items:center"><span class="pill honey">Pillar 3 · Dynamic</span>
+          <div class="node honey"><div class="t">Deep Research</div><div class="k">decompose → recursive fan-out → synth</div></div></div>
+      </div>
+      <div class="note">google-adk 2.3.0 · model gemini-flash-latest</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ L0 ============ -->
+<section class="slide" id="l0">
+  <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
+  <div class="head"><img class="bug" src="./felt/mascot-wave.png" alt="">
+    <div><div class="eyebrow">L0 · Pillar 0</div><h1>Your First Agent</h1><p class="sub">the atom: an Agent + a Runner</p></div></div>
+  <div class="body"><div class="row">
+    <div class="node ink"><div class="t">user question</div><div class="k">"race-day advice?"</div></div>
+    <div class="arrow">→</div>
+    <div class="node blue"><div class="t">Runner</div><div class="k">runs the agent in a session</div></div>
+    <div class="arrow">→</div>
+    <div class="node sage"><div class="t">Agent · pace_coach</div><div class="k">gemini-flash · instruction</div></div>
+    <div class="arrow">→</div>
+    <div class="node ink"><div class="t">answer</div><div class="k">streamed events</div></div>
+  </div></div>
+</section>
+
+<!-- ============ L1 ============ -->
+<section class="slide" id="l1">
+  <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
+  <div class="head"><img class="bug" src="./felt/mascot-wave.png" alt="">
+    <div><div class="eyebrow">L1 · Pillar 1</div><h1>Your First Workflow</h1><p class="sub">a function node and an agent node are peers</p></div></div>
+  <div class="body"><div class="row">
+    <div class="node ink"><div class="t">START</div></div>
+    <div class="arrow">→</div>
+    <div class="node sage"><div class="t">fetch_conditions</div><div class="k">function · 0 LLM</div></div>
+    <div class="arrow">→</div>
+    <div class="node blue"><div class="t">advise</div><div class="k">agent · 1 LLM</div></div>
+  </div></div>
+  <div class="note">Predictable work stays a function · only reasoning is an agent</div>
+</section>
+
+<!-- ============ L2a ============ -->
+<section class="slide" id="l2a">
+  <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
+  <div class="head"><img class="bug" src="./felt/mascot-wave.png" alt="">
+    <div><div class="eyebrow">L2a · Pillar 1</div><h1>Parallel Fan-out + JoinNode</h1><p class="sub">gather in parallel, bundle, hand to one agent</p></div></div>
+  <div class="body"><div class="row">
+    <div class="node ink"><div class="t">START</div></div>
+    <div class="arrow">⇉</div>
+    <div class="stack"><div class="cap">in parallel · 0 LLM</div>
+      <div class="node sage sm"><div class="t">fetch_weather</div></div>
+      <div class="node sage sm"><div class="t">analyze_course</div></div>
+      <div class="node sage sm"><div class="t">pull_fitness</div></div></div>
+    <div class="arrow">→</div>
+    <div class="node honey"><div class="t">JoinNode</div><div class="k">bundle → typed payload</div></div>
+    <div class="arrow">→</div>
+    <div class="node blue"><div class="t">strategy</div><div class="k">1 agent</div></div>
+  </div></div>
+</section>
+
+<!-- ============ L2b ============ -->
+<section class="slide" id="l2b">
+  <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
+  <div class="head"><img class="bug" src="./felt/mascot-wave.png" alt="">
+    <div><div class="eyebrow">L2b · Pillar 1 · Graph</div><h1>Add the Deterministic Router</h1><p class="sub">branch with an if-statement, not the model · 1 LLM call</p></div></div>
+  <div class="body"><div class="row">
+    <div class="node ink"><div class="t">START</div></div>
+    <div class="arrow">⇉</div>
+    <div class="stack"><div class="cap">parallel · 0 LLM</div>
+      <div class="node sage sm"><div class="t">fetch_weather</div></div>
+      <div class="node sage sm"><div class="t">analyze_course</div></div>
+      <div class="node sage sm"><div class="t">pull_fitness</div></div></div>
+    <div class="arrow">→</div>
+    <div class="node honey"><div class="t">JoinNode</div></div>
+    <div class="arrow">→</div>
+    <div class="node coral"><div class="t">router</div><div class="k">if temp ≥ 70 …</div></div>
+    <div class="arrow">→</div>
+    <div class="stack"><div class="cap">one of three</div>
+      <div class="node blue sm"><div class="t">hot</div></div>
+      <div class="node blue sm"><div class="t">normal</div></div>
+      <div class="node blue sm"><div class="t">cold</div></div></div>
+  </div></div>
+</section>
+
+<!-- ============ L3 ============ -->
+<section class="slide" id="l3">
+  <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
+  <div class="head"><img class="bug" src="./felt/mascot-think.png" alt="">
+    <div><div class="eyebrow">L3 · Pillar 2 · Collaborative</div><h1>The Race Concierge</h1><p class="sub">coordinator picks a dynamic subset, runs it in parallel</p></div></div>
+  <div class="body"><div class="row">
+    <div class="node coral"><div class="t">race_concierge</div><div class="k">coordinator · reads the question</div></div>
+    <div class="arrow">⇉</div>
+    <div class="stack"><div class="cap">6 specialists · single_turn</div>
+      <div class="row" style="gap:10px">
+        <div class="col" style="gap:10px">
+          <div class="node sage sm"><div class="t">medical</div></div>
+          <div class="node sage sm"><div class="t">weather</div></div>
+          <div class="node sage sm"><div class="t">pacing</div></div></div>
+        <div class="col" style="gap:10px">
+          <div class="node sage sm"><div class="t">gear</div></div>
+          <div class="node sage sm"><div class="t">nutrition</div></div>
+          <div class="node sage sm"><div class="t">mental</div></div></div>
+      </div></div>
+    <div class="arrow">→</div>
+    <div class="node honey"><div class="t">synthesize</div><div class="k">one answer</div></div>
+  </div></div>
+  <div class="note">"What about fueling?" → nutrition only &nbsp;·&nbsp; "Should I race today?" → medical + weather + pacing</div>
+</section>
+
+<!-- ============ L4a ============ -->
+<section class="slide" id="l4a">
+  <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
+  <div class="head"><img class="bug" src="./felt/mascot-think.png" alt="">
+    <div><div class="eyebrow">L4a · Pillar 3 · Dynamic</div><h1>Runtime-Sized Fan-out</h1><p class="sub">the LLM picks how many sub-questions (width)</p></div></div>
+  <div class="body"><div class="row">
+    <div class="node ink"><div class="t">question</div></div>
+    <div class="arrow">→</div>
+    <div class="node coral"><div class="t">decompose</div><div class="k">3–7 sub-qs (runtime)</div></div>
+    <div class="arrow">⇉</div>
+    <div class="stack"><div class="cap">parallel_worker</div>
+      <div class="node sage sm"><div class="t">research q1</div></div>
+      <div class="node sage sm"><div class="t">research q2</div></div>
+      <div class="node sage sm"><div class="t">research …qN</div></div></div>
+    <div class="arrow">→</div>
+    <div class="node honey"><div class="t">synthesize</div><div class="k">briefing</div></div>
+  </div></div>
+</section>
+
+<!-- ============ L4b ============ -->
+<section class="slide" id="l4b">
+  <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
+  <div class="head"><img class="bug" src="./felt/mascot-think.png" alt="">
+    <div><div class="eyebrow">L4b · Pillar 3 · Dynamic</div><h1>Add Recursive Spawning</h1><p class="sub">a branch can spawn its own deeper questions (depth) · bounded by MAX_DEPTH</p></div></div>
+  <div class="body"><div class="row">
+    <div class="node coral"><div class="t">decompose</div></div>
+    <div class="arrow">⇉</div>
+    <div class="col" style="gap:14px">
+      <div class="row"><div class="node sage sm"><div class="t">research q1</div></div>
+        <div class="arrow small">→</div>
+        <div class="stack" style="padding:10px"><div class="cap">depth 2 · ctx.run_node</div>
+          <div class="node sage sm"><div class="t">child q1·a</div></div>
+          <div class="node sage sm"><div class="t">child q1·b</div></div></div></div>
+      <div class="row"><div class="node sage sm"><div class="t">research q2</div></div>
+        <div class="arrow small" style="opacity:.35">→</div>
+        <div class="node ink sm" style="opacity:.5"><div class="t">no spawn</div></div></div>
+      <div class="row"><div class="node sage sm"><div class="t">research q3</div></div>
+        <div class="arrow small">→</div>
+        <div class="stack" style="padding:10px"><div class="cap">depth 2</div>
+          <div class="node sage sm"><div class="t">child q3·a</div></div></div></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node honey"><div class="t">synthesize</div><div class="k">whole tree</div></div>
+  </div></div>
+</section>
+
+<!-- ============ DECISION TABLE ============ -->
+<section class="slide" id="table">
+  <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
+  <div class="head"><img class="bug" src="./felt/mascot-wave.png" alt="">
+    <div><div class="eyebrow">L5 · the finish line</div><h1>Which Pattern Should You Use?</h1><p class="sub">match the pattern to the shape of your problem</p></div></div>
+  <div class="body"><table>
+    <tr><th>Ask yourself…</th><th>Then use…</th><th>Levels</th></tr>
+    <tr><td><span class="q">Can you draw the flow before the input arrives?</span></td><td><span class="tag blue">Pillar 1 · Graph workflow</span></td><td>L2a · L2b</td></tr>
+    <tr><td><span class="q">Known team, but the request picks the subset?</span></td><td><span class="tag sage">Pillar 2 · Collaborative</span></td><td>L3</td></tr>
+    <tr><td><span class="q">Does the shape itself depend on the input?</span></td><td><span class="tag honey">Pillar 3 · Dynamic</span></td><td>L4a · L4b</td></tr>
+  </table></div>
+  <div class="note">Not "2.0 can do what 1.x couldn't" — 2.0 gives each shape a more direct home. And they compose.</div>
+</section>
+
+<script>
+// Per-step roadmap: ?step=N marks stops 0..N-1 done, stop N "you are here".
+(function(){
+  var p = new URLSearchParams(location.search);
+  if(!p.has('step')) return;
+  var idx = parseInt(p.get('step'), 10);
+  var stops = document.querySelectorAll('#roadmap .stop');
+  stops.forEach(function(el, i){
+    el.classList.remove('done','now');
+    if(i < idx) el.classList.add('done');
+    else if(i === idx) el.classList.add('now');
+  });
+})();
+</script>
+</body>
+</html>

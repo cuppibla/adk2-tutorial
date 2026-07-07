@@ -1,0 +1,14 @@
+[project]
+name = "adk2-tutorial"
+version = "0.1.0"
+description = "A graded, runnable tutorial for ADK 2's three orchestration patterns."
+requires-python = ">=3.11"
+dependencies = [
+    "google-adk==2.3.0",
+    "python-dotenv>=1.0",
+    "pydantic>=2.0",
+]
+
+# Install with uv (recommended):
+#   uv sync
+# 2.3.0 is the latest stable; every level was verified on it (and on 2.0.0b1).

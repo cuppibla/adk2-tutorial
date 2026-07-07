@@ -1,0 +1,6 @@
+# ADK 2 orchestration tutorial — pinned to the exact version the code was verified on.
+# Newer stable releases exist (2.1+, 2.3+) but the graph/collab/dynamic APIs used
+# here were validated against 2.3.0. Bump at your own risk; the API may have moved.
+google-adk==2.3.0
+python-dotenv>=1.0
+pydantic>=2.0
