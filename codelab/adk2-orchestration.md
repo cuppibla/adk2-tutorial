@@ -36,7 +36,7 @@ One app — a **Marathon Race Day Coach** — that shows all three orchestration
 ### What you'll need
 
 - A Google account (for Colab) — **no local setup required**.
-- A free Gemini API key: [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+- A free **Google AI Studio** API key: [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
 - ~30 minutes.
 
 > aside positive
@@ -46,7 +46,7 @@ One app — a **Marathon Race Day Coach** — that shows all three orchestration
 
 Every step below maps to **one cell in the Colab notebook** and **one folder in the GitHub repo**. Pick either:
 
-- **▶ Colab (recommended):** [Open the notebook](https://colab.research.google.com/drive/1J-sflaibh9kAPveOCZEW4lMpn9KZPLeI) → run cells top to bottom.
+- **▶ Colab (recommended):** [Open the notebook](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0) → run cells top to bottom.
 - **💻 Local:** `git clone` the [repo](https://github.com/cuppibla/adk2-tutorial), `./setup_venv.sh`, then run each level as a module (`python -m …`) or browse them all with `./run.sh` (`adk web`).
 
 ## Setup: open the notebook and add your key
@@ -54,7 +54,7 @@ Duration: 4
 
 ### Open Colab
 
-Click **[Open in Colab](https://colab.research.google.com/drive/1J-sflaibh9kAPveOCZEW4lMpn9KZPLeI)**. You'll land on the notebook with a markdown intro and a series of runnable cells.
+Click **[Open in Colab](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0)**. You'll land on the notebook with a markdown intro and a series of runnable cells.
 
 ### Install ADK 2
 
@@ -67,14 +67,22 @@ Run the first code cell. It pins the exact version this codelab was verified on:
 > aside negative
 > Verified on **2.3.0** (latest stable) and 2.0.0b1 — the graph / collaborative / dynamic APIs are unchanged across the ADK 2 line so far. If a future release breaks them, re-verify.
 
-### Add your API key
+### Add your Google AI Studio API key
 
-Run the key cell. The recommended path uses Colab's **🔑 Secrets** panel (left sidebar): add a secret named `GOOGLE_API_KEY`, then the cell reads it. No key in the Secrets panel? The cell falls back to prompting you to paste one.
+1. Open **[aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)** in a new tab, click **Create API key**, and copy it (it starts with `AIza…`).
+2. In Colab, click the **🔑 Secrets** icon in the left sidebar → **Add new secret** → name it **`GOOGLE_API_KEY`**, paste the value, and toggle **Notebook access ON**.
+3. Run the key cell. It reads the secret (or falls back to a hidden paste prompt), points ADK at **AI Studio** (not Vertex AI), and confirms:
 
 ```python
 from google.colab import userdata
-os.environ["GOOGLE_API_KEY"] = userdata.get("GOOGLE_API_KEY")
+GOOGLE_API_KEY = userdata.get("GOOGLE_API_KEY")          # or getpass fallback
+os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"        # use AI Studio (Gemini API)
+# → ✅ API key configured (starts with 'AIzaSy...')
 ```
+
+> aside positive
+> This uses a free **Google AI Studio** key — no Google Cloud project or billing needed. `GOOGLE_GENAI_USE_VERTEXAI=False` keeps ADK on the AI Studio (Gemini API) path.
 
 ### Run the "shared building blocks" cell
 
@@ -95,7 +103,7 @@ Duration: 3
 - **`Agent`** — the thing that reasons (a Gemini model + an instruction).
 - **`Runner`** — the thing that executes an agent inside a session and streams events.
 
-▶ **Colab:** run the [`L0` cell](https://colab.research.google.com/drive/1J-sflaibh9kAPveOCZEW4lMpn9KZPLeI#scrollTo=L0) · 📁 **GitHub:** [`L0_first_agent/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L0_first_agent) · 💻 **Local:** `python -m L0_first_agent.agent`
+▶ **Colab:** run the [`L0` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L0) · 📁 **GitHub:** [`L0_first_agent/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L0_first_agent) · 💻 **Local:** `python -m L0_first_agent.agent`
 
 ![L0 flow](img/diagram-l0.png)
 
@@ -127,7 +135,7 @@ Duration: 4
 START ──► fetch_conditions (function, 0 LLM) ──► advise (agent, 1 LLM)
 ```
 
-▶ **Colab:** run the [`L1` cell](https://colab.research.google.com/drive/1J-sflaibh9kAPveOCZEW4lMpn9KZPLeI#scrollTo=L1) · 📁 **GitHub:** [`L1_graph_basics/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L1_graph_basics) · 💻 **Local:** `python -m L1_graph_basics.workflow`
+▶ **Colab:** run the [`L1` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L1) · 📁 **GitHub:** [`L1_graph_basics/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L1_graph_basics) · 💻 **Local:** `python -m L1_graph_basics.workflow`
 
 ![L1 flow](img/diagram-l1.png)
 
@@ -160,7 +168,7 @@ START ──► analyze_course ─┼─► JoinNode ─► strategy (1 agent)
 START ──► pull_fitness ───┘   (bundles)
 ```
 
-▶ **Colab:** run the [`L2a` cell](https://colab.research.google.com/drive/1J-sflaibh9kAPveOCZEW4lMpn9KZPLeI#scrollTo=L2a) · 📁 **GitHub:** [`L2a_parallel_join/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2a_parallel_join) · 💻 **Local:** `python -m L2a_parallel_join.workflow`
+▶ **Colab:** run the [`L2a` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L2a) · 📁 **GitHub:** [`L2a_parallel_join/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2a_parallel_join) · 💻 **Local:** `python -m L2a_parallel_join.workflow`
 
 ![L2a flow](img/diagram-l2a.png)
 
@@ -188,7 +196,7 @@ Duration: 4
                                 ─► cold_strategy
 ```
 
-▶ **Colab:** run the [`L2b` cell](https://colab.research.google.com/drive/1J-sflaibh9kAPveOCZEW4lMpn9KZPLeI#scrollTo=L2b) — try `run("NORMAL")` / `run("COLD")` · 📁 **GitHub:** [`L2b_router/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2b_router) · 💻 **Local:** `python -m L2b_router.workflow COLD`
+▶ **Colab:** run the [`L2b` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L2b) — try `run("NORMAL")` / `run("COLD")` · 📁 **GitHub:** [`L2b_router/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2b_router) · 💻 **Local:** `python -m L2b_router.workflow COLD`
 
 ![L2b flow](img/diagram-l2b.png)
 
@@ -228,7 +236,7 @@ Duration: 5
 | "Should I race today?" | medical + weather + pacing |
 | "Anything I should worry about?" | all 6 |
 
-▶ **Colab:** run the [`L3` cell](https://colab.research.google.com/drive/1J-sflaibh9kAPveOCZEW4lMpn9KZPLeI#scrollTo=L3) · 📁 **GitHub:** [`L3_collaborative/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L3_collaborative) · 💻 **Local:** `python -m L3_collaborative.concierge "Should I race today?"`
+▶ **Colab:** run the [`L3` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L3) · 📁 **GitHub:** [`L3_collaborative/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L3_collaborative) · 💻 **Local:** `python -m L3_collaborative.concierge "Should I race today?"`
 
 ![L3 flow](img/diagram-l3.png)
 
@@ -268,7 +276,7 @@ An open-ended question is **decomposed** into N sub-questions — **N is chosen 
 > aside negative
 > This cell makes **~7–9 live LLM calls** and takes **~20–30s**. It costs real API quota.
 
-▶ **Colab:** run the [`L4a` cell](https://colab.research.google.com/drive/1J-sflaibh9kAPveOCZEW4lMpn9KZPLeI#scrollTo=L4a) · 📁 **GitHub:** [`L4a_flat_research/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4a_flat_research) · 💻 **Local:** `python -m L4a_flat_research.deep_research`
+▶ **Colab:** run the [`L4a` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L4a) · 📁 **GitHub:** [`L4a_flat_research/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4a_flat_research) · 💻 **Local:** `python -m L4a_flat_research.deep_research`
 
 ![L4a flow](img/diagram-l4a.png)
 
@@ -297,7 +305,7 @@ START ─► decompose ─► research_topic (parallel_worker, recursive) ─►
 > aside negative
 > This cell makes **~10–17 live LLM calls** and takes **20–45s**. Run it deliberately.
 
-▶ **Colab:** run the [`L4b` cell](https://colab.research.google.com/drive/1J-sflaibh9kAPveOCZEW4lMpn9KZPLeI#scrollTo=L4b) · 📁 **GitHub:** [`L4b_recursion/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4b_recursion) · 💻 **Local:** `python -m L4b_recursion.deep_research`
+▶ **Colab:** run the [`L4b` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L4b) · 📁 **GitHub:** [`L4b_recursion/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4b_recursion) · 💻 **Local:** `python -m L4b_recursion.deep_research`
 
 ![L4b flow](img/diagram-l4b.png)
 

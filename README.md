@@ -2,7 +2,7 @@
 
 > Learn ADK 2's **three orchestration patterns** — graph workflows, collaborative agents, dynamic workflows — one runnable rung at a time, all through a single **Marathon Race Day Coach**.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1J-sflaibh9kAPveOCZEW4lMpn9KZPLeI)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0)
 
 <!-- ↑ This points at the shared Colab copy. After pushing the repo public you can switch to the auto-updating form: colab.research.google.com/github/<owner>/<repo>/blob/main/notebooks/adk2_orchestration.ipynb -->
 

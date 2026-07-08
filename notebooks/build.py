@@ -124,9 +124,11 @@ If you have questions about this notebook, reach me on [LinkedIn](https://www.li
 cells.append(md("""---
 ## 🔑 Part 0 · Setup & Authentication
 
-First things first — let's get your gear on! 🎽 This step installs the exact ADK 2 version the tutorial was verified on, then securely wires up your Gemini API key.
+First things first — let's get your gear on! 🎽 This step installs the exact ADK 2 version the tutorial was verified on, then wires up your **Google AI Studio** API key.
 
-👉 **Get a free API key here:** [Google AI Studio](https://aistudio.google.com/apikey)""", "setup"))
+1. 👉 Get a free key at **[aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)** — click *Create API key*, copy it (starts with `AIza…`).
+2. 🔑 In Colab, click the **Secrets** icon (left sidebar) → *Add new secret* → name it **`GOOGLE_API_KEY`**, paste the value, and toggle **Notebook access ON**.
+3. Run the two cells below.""", "setup"))
 
 cells.append(code('''# Pin the exact ADK 2 version this tutorial was verified on.
 %pip install -q "google-adk==2.3.0" python-dotenv pydantic nest_asyncio
@@ -134,16 +136,25 @@ import nest_asyncio; nest_asyncio.apply()   # let Colab's running loop accept ne
 print("\\u2713 installed")''', "install"))
 
 cells.append(code('''import os
-# Preferred: add GOOGLE_API_KEY in Colab's \\U0001f511 Secrets panel (left sidebar), then run this.
-# Fallback: you'll be prompted to paste it. Get a free key at https://aistudio.google.com/apikey
+
+# --- API key: Google AI Studio ---------------------------------------------
+# Preferred: click the 🔑 Secrets icon in the left sidebar, add a secret
+# named GOOGLE_API_KEY, and toggle "Notebook access" ON.
+# Get a free key at: https://aistudio.google.com/app/apikey
 try:
     from google.colab import userdata
-    os.environ["GOOGLE_API_KEY"] = userdata.get("GOOGLE_API_KEY")
-    print("\\u2713 key loaded from Colab Secrets")
+    GOOGLE_API_KEY = userdata.get("GOOGLE_API_KEY")
+    print("\\u2705 API key loaded from Colab Secrets.")
 except Exception:
+    # Fallback: paste it when prompted (hidden input).
     import getpass
-    os.environ["GOOGLE_API_KEY"] = getpass.getpass("Paste your GOOGLE_API_KEY: ")
-    print("\\u2713 key set")''', "apikey"))
+    GOOGLE_API_KEY = getpass.getpass("\\U0001f511 Enter your Google AI Studio API key: ")
+    print("\\u2705 API key entered manually.")
+
+os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"   # use AI Studio (Gemini API), not Vertex AI
+print(f"\\u2705 API key configured (starts with '{GOOGLE_API_KEY[:6]}...')")
+print("\\u2705 Using Google AI Studio (not Vertex AI).")''', "apikey"))
 
 # Shared cell — generated from shared/schemas.py + shared/scenarios.py
 shared_src = (
