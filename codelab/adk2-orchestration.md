@@ -49,14 +49,19 @@ Every step below maps to **one cell in the Colab notebook** and **one folder in 
 - **▶ Colab (recommended):** [Open the notebook](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0) → run cells top to bottom.
 - **💻 Local:** `git clone` the [repo](https://github.com/cuppibla/adk2-tutorial), `./setup_venv.sh`, then run each level as a module (`python -m …`) or browse them all with `./run.sh` (`adk web`).
 
-## Setup: open the notebook and add your key
-Duration: 4
+## Setup & Authentication
+Duration: 5
 
-### Open Colab
+Everything runs on a free **Google AI Studio** API key — no Google Cloud project, no billing, no local install. This whole step is ~3 minutes.
 
-Click **[Open in Colab](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0)**. You'll land on the notebook with a markdown intro and a series of runnable cells.
+### 1 · Open the notebook
 
-### Install ADK 2
+Click **[Open in Colab ▶](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0)**. You'll land on the notebook — a markdown intro, then one runnable cell per level. You run cells top to bottom; each prints its own output right below it.
+
+> aside positive
+> New to Colab? A **cell** is a block of code. Click it and press **Shift+Enter** (or the ▶ button on its left) to run it. Run them **in order** from the top.
+
+### 2 · Install ADK 2  *(~1 min)*
 
 Run the first code cell. It pins the exact version this codelab was verified on:
 
@@ -64,32 +69,70 @@ Run the first code cell. It pins the exact version this codelab was verified on:
 %pip install -q "google-adk==2.3.0" python-dotenv pydantic nest_asyncio
 ```
 
+Wait for it to finish — you'll see `✓ installed`. (The install takes ~30–60s the first time; it's cached after that.)
+
 > aside negative
-> Verified on **2.3.0** (latest stable) and 2.0.0b1 — the graph / collaborative / dynamic APIs are unchanged across the ADK 2 line so far. If a future release breaks them, re-verify.
+> Verified on **2.3.0** (latest stable) and 2.0.0b1 — the graph / collaborative / dynamic APIs are unchanged across the ADK 2 line so far. If a future release breaks them, re-verify and bump the pin.
 
-### Add your Google AI Studio API key
+### 3 · Get your Gemini API key from AI Studio  *(~1 min)*
 
-1. Open **[aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)** in a new tab, click **Create API key**, and copy it (it starts with `AIza…`).
-2. In Colab, click the **🔑 Secrets** icon in the left sidebar → **Add new secret** → name it **`GOOGLE_API_KEY`**, paste the value, and toggle **Notebook access ON**.
-3. Run the key cell. It reads the secret (or falls back to a hidden paste prompt), points ADK at **AI Studio** (not Vertex AI), and confirms:
+1. Open **[aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)** in a new browser tab.
+2. Sign in with your Google account.
+3. Click **Create API key** (top-right).
+4. Pick an existing Google project or let it create one.
+5. **Copy** the key — it starts with `AIza…` and is ~40 characters.
+
+> aside negative
+> **Treat the key like a password.** Don't paste it into public chats, screenshots, or commit it to a public repo. This notebook keeps it out of the code via Colab Secrets (below).
+
+### 4 · Add your key to Colab  *(~1 min)*
+
+**Option A — Colab Secrets (recommended; the key stays hidden):**
+
+1. Click the **🔑 key icon** in the Colab left sidebar.
+2. Click **+ Add new secret**.
+3. Set **Name** to exactly `GOOGLE_API_KEY`.
+4. Paste your key into **Value**.
+5. Toggle **Notebook access** to **ON**.
+
+**Option B — paste when prompted (quick):** skip the secret; when you run the next cell it shows a hidden prompt `🔑 Enter your Google AI Studio API key:` — paste and press Enter.
+
+### 5 · Run the key cell
+
+It reads the secret (or falls back to the paste prompt), then points ADK at **AI Studio** (not Vertex AI):
 
 ```python
-from google.colab import userdata
-GOOGLE_API_KEY = userdata.get("GOOGLE_API_KEY")          # or getpass fallback
-os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"        # use AI Studio (Gemini API)
-# → ✅ API key configured (starts with 'AIzaSy...')
+import os
+
+# Google AI Studio API key — add GOOGLE_API_KEY in the 🔑 Secrets panel (or paste when prompted).
+try:
+    from google.colab import userdata
+    key = userdata.get("GOOGLE_API_KEY")
+except Exception:
+    import getpass
+    key = getpass.getpass("Enter your Google AI Studio API key: ")
+
+os.environ["GOOGLE_API_KEY"] = "".join(key.split())    # drop any stray whitespace/newlines
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"      # use AI Studio, not Vertex AI
+print("✅ API key set — using Google AI Studio.")
 ```
 
+**Expected output:** `✅ API key set — using Google AI Studio.`
+
+> aside negative
+> **`Forbidden control character detected in headers`?** Your key has a stray newline/space (common when pasting into a Colab Secret). The `"".join(key.split())` above strips all whitespace — make sure that line is there, then **restart the runtime** (Runtime → Restart session) and re-run from the top. (Re-pasting the secret cleanly also fixes it.)
+
+> aside negative
+> **Error about an invalid or missing key?** Check that the secret is named **exactly** `GOOGLE_API_KEY`, that **Notebook access** is ON, and that the value starts with `AIza…` (~40 chars). Then re-run the cell.
+
+### 6 · Run the "Shared building blocks" cell
+
+Run the **Shared building blocks** cell once. It defines the Pydantic schemas + canned marathon scenarios that every level from L2 onward reuses. You'll see `✓ schemas + scenarios ready`.
+
 > aside positive
-> This uses a free **Google AI Studio** key — no Google Cloud project or billing needed. `GOOGLE_GENAI_USE_VERTEXAI=False` keeps ADK on the AI Studio (Gemini API) path.
+> **Structured I/O** is how ADK 2 moves typed data between function nodes and agents. An agent with `output_schema=RaceStrategy` is *forced* to emit valid JSON for that model; the next node receives it as a typed object — no parsing glue.
 
-### Run the "shared building blocks" cell
-
-Run the **Shared building blocks** cell once. It defines the Pydantic schemas and canned marathon scenarios that every later level reuses.
-
-> aside positive
-> **Structured I/O** is how ADK 2 moves typed data between function nodes and agents. An agent with `output_schema=RaceStrategy` is *forced* to emit valid JSON for that model; the next node receives it as a typed object.
+You're set up! 🎽 On to **L0**.
 
 ## L0 · Your first ADK 2 agent
 Duration: 3

@@ -137,24 +137,17 @@ print("\\u2713 installed")''', "install"))
 
 cells.append(code('''import os
 
-# --- API key: Google AI Studio ---------------------------------------------
-# Preferred: click the 🔑 Secrets icon in the left sidebar, add a secret
-# named GOOGLE_API_KEY, and toggle "Notebook access" ON.
-# Get a free key at: https://aistudio.google.com/app/apikey
+# Google AI Studio API key — add GOOGLE_API_KEY in the 🔑 Secrets panel (or paste when prompted).
 try:
     from google.colab import userdata
-    GOOGLE_API_KEY = userdata.get("GOOGLE_API_KEY")
-    print("\\u2705 API key loaded from Colab Secrets.")
+    key = userdata.get("GOOGLE_API_KEY")
 except Exception:
-    # Fallback: paste it when prompted (hidden input).
     import getpass
-    GOOGLE_API_KEY = getpass.getpass("\\U0001f511 Enter your Google AI Studio API key: ")
-    print("\\u2705 API key entered manually.")
+    key = getpass.getpass("Enter your Google AI Studio API key: ")
 
-os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"   # use AI Studio (Gemini API), not Vertex AI
-print(f"\\u2705 API key configured (starts with '{GOOGLE_API_KEY[:6]}...')")
-print("\\u2705 Using Google AI Studio (not Vertex AI).")''', "apikey"))
+os.environ["GOOGLE_API_KEY"] = "".join(key.split())   # drop ALL whitespace/newlines (not just the ends)
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"     # use AI Studio, not Vertex AI
+print("\\u2705 API key set \\u2014 using Google AI Studio.")''', "apikey"))
 
 # Shared cell — generated from shared/schemas.py + shared/scenarios.py
 shared_src = (
