@@ -41,7 +41,7 @@ Every level answers one question, adds one idea, and stays runnable on its own. 
 Requires **Python 3.11+** and a Gemini API key ([get one free](https://aistudio.google.com/apikey)).
 
 ```bash
-git clone <this-repo> adk2-tutorial && cd adk2-tutorial
+git clone https://github.com/cuppibla/adk2-tutorial.git && cd adk2-tutorial
 ./setup_venv.sh            # uv if available, else python venv + pip; also creates .env
 # edit .env → paste your GOOGLE_API_KEY
 ```

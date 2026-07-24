@@ -7,3 +7,6 @@ __pycache__/
 
 # claat build output (regenerated from codelab/*.md)
 codelab/adk2-orchestration/
+
+# ADK local session store (runtime artifact)
+.adk/

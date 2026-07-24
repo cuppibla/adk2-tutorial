@@ -286,12 +286,40 @@ Duration: 5
 Run it, then change the question and re-run. **The contrast between two questions is the lesson.**
 
 ```python
+# Each specialist is a subagent in single_turn mode → no user interaction,
+# auto-returns its result, and CAN run in parallel. (mode is set on subagents.)
+def specialist(name, focus):
+    return Agent(name=name, model=MODEL, mode="single_turn",
+                 input_schema=SpecialistInput, output_schema=SpecialistResponse,
+                 instruction=f"You are a marathon {name} specialist. Focus: {focus} …")
+
+medical = specialist("medical", "injury, pain, when to stop, heat stroke")
+# … weather, pacing, gear, nutrition, mental — same factory
+
+# The coordinator holds them as sub_agents. NOTE: no `mode` on the coordinator.
 race_concierge = Agent(name="race_concierge", model=MODEL,
                        sub_agents=[medical, weather, pacing, gear, nutrition, mental],
                        instruction="...DECIDE which specialists are relevant... call them IN PARALLEL... SYNTHESIZE...")
 ```
 
-**What you'll see:** `DISPATCH -> medical_specialist` lines revealing the chosen subset, then one synthesized answer.
+**How the chosen specialists run together:** the coordinator reads the question and emits **several delegation-tool calls in one turn** (ADK auto-injects one tool per subagent). Because those subagents are `single_turn`, ADK runs them **in parallel**, each in its own isolated session branch; when all finish, their results return to the coordinator, which synthesizes one answer.
+
+**What you'll see:** `DISPATCH -> medical_specialist` lines (same timestamp = one turn, many calls) revealing the chosen subset, then one synthesized answer.
+
+### The three collaboration modes
+
+A subagent's `mode` sets how much it interacts with the user and whether it can run in parallel. ADK 2 has three — set `mode` on **subagents only**, never on the coordinator:
+
+| Mode | Human in the loop | Parallel? | Returns to parent |
+| --- | --- | --- | --- |
+| `chat` *(default for a subagent)* | full conversation | no | manual (via transfer) |
+| `task` | clarifying questions only | no | automatic (when the task is done) |
+| `single_turn` | none | **yes** | automatic (with its result) |
+
+**Why this demo uses `single_turn`:** each specialist answers *independently* from the strategy + runner data it's handed — no user Q&A needed — and `single_turn` is the only mode that runs **in parallel**. That's exactly the Pillar 2 point: a dynamic subset, run concurrently. Reach for `chat` when a subagent needs a free back-and-forth with the user, or `task` when it must ask one clarifying question before finishing.
+
+> aside negative
+> `mode` is for **subagents only** — don't set it on the coordinator. And a `task`-mode agent **cannot be a static node in a graph workflow**: `Workflow(...)` raises at construction time, because the scheduler overwrites a node's input with the latest user message on re-entry, which would lose the task brief. ADK's own error names the two ways around it — *"use a chat coordinator with task sub-agents"* (what this level does), *"or dispatch dynamically via `ctx.run_node` from a function node."*
 
 > aside positive
 > **Uniquely ADK 2:** an LLM picks a **per-request subset** AND runs it in parallel. In 1.x, `ParallelAgent` is always-all and `transfer_to_agent` is serial — neither does dynamic-subset-in-parallel.
