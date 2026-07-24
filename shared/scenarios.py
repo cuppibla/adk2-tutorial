@@ -2,8 +2,11 @@
 
 Real fetches would hit weather APIs, GIS services, Strava, etc. For the tutorial
 we hardcode three scenarios (HOT / NORMAL / COLD) selected via the
-MARATHON_SCENARIO env var, with an optional MARATHON_SLOW_MO multiplier on the
-simulated fetch latencies (handy on stage to stretch the parallel-pulse window).
+MARATHON_SCENARIO env var. Note that L2a/L2b take the scenario as their FIRST
+CLI ARG and overwrite the env var with it, so `MARATHON_SCENARIO=COLD python -m
+L2b_router.workflow HOT` runs HOT — the arg wins. There is also an optional
+MARATHON_SLOW_MO multiplier on the simulated fetch latencies (handy on stage to
+stretch the parallel-pulse window).
 """
 from __future__ import annotations
 

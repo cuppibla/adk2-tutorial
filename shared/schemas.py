@@ -2,7 +2,9 @@
 
 Structured I/O is how ADK 2 keeps typed data moving between function nodes and
 agents. An agent with `output_schema=RaceStrategy` is forced to emit valid JSON
-for that model; a function node downstream receives it as a typed object.
+for that model. Downstream nodes receive it VALIDATED but as a plain dict (an
+agent node receives it as JSON text) — annotate a function node's `node_input`
+parameter if you want ADK to hand you back a typed object.
 """
 from __future__ import annotations
 

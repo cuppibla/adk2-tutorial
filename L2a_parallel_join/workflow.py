@@ -30,24 +30,53 @@ from shared import BundledRunData, RaceStrategy, scenario, slow_mo
 
 load_dotenv()
 
+# [local-only]
+# Fail fast with one readable line. Without this, a missing key surfaces ~290
+# lines of ADK/asyncio traceback with the real cause on the very last line.
+if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
+    sys.exit(
+        "\u2717 No API key found.\n"
+        "  cp .env.example .env  then add GOOGLE_API_KEY=...\n"
+        "  Get a free key at https://aistudio.google.com/apikey"
+    )
+# [/local-only]
+
+
 MODEL = "gemini-flash-latest"
 
 
 # ─── Fetch nodes: parallel, zero LLM. Simulated latency so you SEE concurrency. ─
+#
+# Each fetch prints when it starts and finishes, relative to the start of the run.
+# That overlap is the actual evidence for the parallel claim — all three start at
+# ~0.0s and the fan-out ends when the SLOWEST one does, not when their durations
+# add up. (Wall time for the whole run is a bad proxy: it also contains the
+# strategy agent's LLM call, which is several seconds on its own.)
+
+_T0 = 0.0
+
+
+def _stamp(msg: str) -> None:
+    print(f"  [t={time.perf_counter() - _T0:4.1f}s] {msg}")
+
+
+async def _fetch(name: str, seconds: float, key: str):
+    _stamp(f"{name} started")
+    await asyncio.sleep(seconds * slow_mo())
+    _stamp(f"{name} finished")
+    return Event(output=scenario()[key].model_dump())
+
 
 async def fetch_weather(node_input):
-    await asyncio.sleep(1.5 * slow_mo())
-    return Event(output=scenario()["weather"].model_dump())
+    return await _fetch("fetch_weather", 1.5, "weather")
 
 
 async def analyze_course(node_input):
-    await asyncio.sleep(2.0 * slow_mo())
-    return Event(output=scenario()["course"].model_dump())
+    return await _fetch("analyze_course", 2.0, "course")
 
 
 async def pull_fitness(node_input):
-    await asyncio.sleep(1.0 * slow_mo())
-    return Event(output=scenario()["fitness"].model_dump())
+    return await _fetch("pull_fitness", 1.0, "fitness")
 
 
 # ─── Join: bundle the three parallel results into one typed payload. ──────────
@@ -58,7 +87,7 @@ join_inputs = JoinNode(name="join_inputs")
 # ─── One strategy agent (no routing yet). ─────────────────────────────────────
 
 strategy = Agent(
-    name="strategy", model=MODEL, mode="single_turn",
+    name="strategy", model=MODEL,
     input_schema=BundledRunData, output_schema=RaceStrategy,
     instruction="""You are a marathon coach. You receive BundledRunData (weather from
 fetch_weather, course from analyze_course, fitness from pull_fitness). Produce a
@@ -93,15 +122,17 @@ def _event_text(event):
 
 
 async def run(scenario_name="HOT"):
+    global _T0
     os.environ["MARATHON_SCENARIO"] = scenario_name.upper()
     print(f"=== L2a · scenario: {scenario_name.upper()} ===")
     runner = Runner(node=root, app_name="l2a", session_service=InMemorySessionService(), auto_create_session=True)
-    t0 = time.perf_counter()
+    t0 = _T0 = time.perf_counter()
     async for event in runner.run_async(user_id="u1", session_id="s1", new_message=None):
         t = _event_text(event)
         if t:
             print(f"\n🏁 RaceStrategy:\n{t}")
-    print(f"\n  Wall time: {time.perf_counter()-t0:.1f}s (3 fetches ran in parallel)")
+    print(f"\n  Total wall time: {time.perf_counter()-t0:.1f}s "
+          f"(fan-out + join + 1 LLM call — the fetch timestamps above are the parallel evidence)")
 
 
 if __name__ == "__main__":

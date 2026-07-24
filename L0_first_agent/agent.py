@@ -14,6 +14,7 @@ Run it:
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 
 from dotenv import load_dotenv
@@ -23,6 +24,18 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types as gtypes
 
 load_dotenv()  # reads GOOGLE_API_KEY / GEMINI_API_KEY from .env
+
+# [local-only]
+# Fail fast with one readable line. Without this, a missing key surfaces ~290
+# lines of ADK/asyncio traceback with the real cause on the very last line.
+if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
+    sys.exit(
+        "\u2717 No API key found.\n"
+        "  cp .env.example .env  then add GOOGLE_API_KEY=...\n"
+        "  Get a free key at https://aistudio.google.com/apikey"
+    )
+# [/local-only]
+
 
 MODEL = "gemini-flash-latest"
 

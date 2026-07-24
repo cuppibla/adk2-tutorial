@@ -79,7 +79,7 @@ Always run levels as **modules from the repo root** (`python -m L2b_router.workf
 
 - **Package:** `google-adk==2.3.0` (latest stable; every level was verified on it — see note below).
 - **Model:** `gemini-flash-latest`.
-- **Cost:** L0–L2b are cheap (0–1 model call each). L3 makes a handful. **L4a is ~7–9 calls; L4b is ~10–17 per run** — run those deliberately.
+- **Cost:** L0–L2b are cheap (0–1 model call each). L3 makes a handful. **L4a is 5–9 calls; L4b is 5–30 per run** — run those deliberately.
 
 > **Version note.** Verified on **2.3.0** (latest stable) and also on 2.0.0b1 — the graph / collaborative / dynamic APIs (`Workflow(edges=...)`, `JoinNode`, `@node(parallel_worker=True)`, `Agent(mode="single_turn")`) are unchanged across the ADK 2 line so far. If a future release breaks them, re-verify and bump the pin.
 
@@ -106,4 +106,6 @@ Each `LX/__init__.py` re-exports its main node as `root_agent` (`from .workflow 
 The runnable `L*/` modules are the **single source of truth**. `notebooks/build.py` reads them and regenerates the Colab notebook (inlining `shared/`, stripping imports, adding stable cell ids). The [codelab](codelab/) deep-links each step to its notebook cell (`…ipynb#scrollTo=<id>`) and lists the matching `python -m …` command. Edit a module → run `python notebooks/build.py` → the notebook is current.
 
 ## A note on running it (what "easy to run" honestly means)
-These are live, nondeterministic models. Two things you may occasionally see, both expected and both harmless: a **schema-validation warning** in L3 (a specialist returned prose instead of JSON; the coordinator recovers), and a **`cancelling N leftover tasks`** line at the end of L4b (ADK tearing down its parallel task group). Neither stops the run.
+L3 opens with `UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled` — that's ADK noting that pydantic `input_schema`s on subagents go through its experimental JSON-schema path. Expected, harmless, prints once.
+
+Beyond that, these are live, nondeterministic models. Two things you may occasionally see, both expected and both harmless: an **`Error validating input`** line in L3 (the coordinator has to re-serialize a large nested schema for each parallel call and sometimes fumbles one — it recovers and still synthesizes), and a **`cancelling N leftover tasks`** line at the end of L4b (ADK tearing down its parallel task group; it's a log warning, so depending on your logging config you may never see it). Neither stops the run.

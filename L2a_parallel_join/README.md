@@ -17,7 +17,20 @@ python -m L2a_parallel_join.workflow COLD
 Slow the fetches to *watch* the parallelism: `MARATHON_SLOW_MO=3 python -m L2a_parallel_join.workflow`.
 
 ## What you'll see
-The strategy cites real numbers, and the wall time is near the *slowest* fetch (~2s) rather than the sum (~4.5s) — the three fetches ran concurrently.
+Each fetch prints when it **starts** and **finishes**:
+
+```
+  [t= 0.0s] fetch_weather started
+  [t= 0.0s] analyze_course started
+  [t= 0.0s] pull_fitness started
+  [t= 1.0s] pull_fitness finished
+  [t= 1.5s] fetch_weather finished
+  [t= 2.0s] analyze_course finished
+```
+
+All three start at **0.0s** and the fan-out is done at **2.0s** — the slowest fetch, not the **4.5s** their durations would add up to. That overlap *is* the parallelism.
+
+Then the strategy cites real numbers from the bundle. The **total wall time** printed at the end is larger (~8s) because it also contains the strategy agent's LLM call — read the fetch timestamps, not the total, for the parallel claim.
 
 ## What's new vs L1
 - **Parallel edges:** three `(START, fetch_*, join_inputs)` edges fan out from `START`.

@@ -14,8 +14,10 @@ chosen ones IN PARALLEL (multiple function calls in one turn), then synthesizes
 one answer. "What about fueling?" → nutrition only. "Should I race today?" →
 medical + weather + pacing. "Anything I should worry about?" → all 6.
 
-This is what's uniquely ADK 2: an LLM picks a per-request subset AND runs it
-concurrently. 1.x ParallelAgent is always-all; transfer_to_agent is serial.
+Where ADK 2 gives this a direct home: 1.x could build this shape by wrapping each
+specialist in AgentTool and letting the coordinator call them. What changes here is
+that the team and its parallelism are DECLARED (sub_agents + mode="single_turn")
+instead of hand-assembled. (ParallelAgent is always-all; transfer_to_agent is serial.)
 
 Run it:
     python -m L3_collaborative.concierge
@@ -25,6 +27,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 import time
 
@@ -38,6 +41,18 @@ from shared import BundledRunData, RaceStrategy, SpecialistInput, SpecialistResp
 
 load_dotenv()
 
+# [local-only]
+# Fail fast with one readable line. Without this, a missing key surfaces ~290
+# lines of ADK/asyncio traceback with the real cause on the very last line.
+if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
+    sys.exit(
+        "\u2717 No API key found.\n"
+        "  cp .env.example .env  then add GOOGLE_API_KEY=...\n"
+        "  Get a free key at https://aistudio.google.com/apikey"
+    )
+# [/local-only]
+
+
 MODEL = "gemini-flash-latest"
 
 
@@ -46,6 +61,11 @@ MODEL = "gemini-flash-latest"
 def _specialist(name: str, domain: str, focus: str) -> Agent:
     return Agent(
         name=name, model=MODEL, mode="single_turn",
+        # `description` is NOT optional decoration: ADK turns each subagent into a
+        # tool and uses this text as that tool's description, so it is what the
+        # coordinator actually reads when choosing the subset. Skip it and you are
+        # asking the coordinator to route on the agent's *name* alone.
+        description=f"Marathon {domain} specialist. Consult for: {focus}.",
         input_schema=SpecialistInput, output_schema=SpecialistResponse,
         instruction=f"""You are a marathon {domain} specialist. Answer ONLY questions
 within your domain. Focus: {focus}
@@ -110,12 +130,32 @@ def _build_message(question: str) -> gtypes.Content:
     runner_data = BundledRunData(
         fetch_weather=s["weather"], analyze_course=s["course"], pull_fitness=s["fitness"],
     )
+    # Derive the strategy from the SAME scenario the runner data came from.
+    # (Hardcoding a heat-stroke warning here would contradict the 35°F numbers a
+    # learner sees after `MARATHON_SCENARIO=COLD` — the specialists would be
+    # handed a self-contradicting brief.)
+    w = s["weather"]
+    if w.temp_f >= 70:
+        pacing = "Start 20s/mile slower than goal pace to bank against the heat."
+        gear = "Light singlet, cap, sunglasses."
+        warning = (f"{w.temp_f:.0f}°F + {w.humidity_pct}% humidity — "
+                   "real heat-stroke risk at your usual 7:30 pace.")
+    elif w.temp_f <= 40:
+        pacing = "Hold goal pace; the cold masks effort, so do not start too fast."
+        gear = "Long sleeves, gloves, throwaway layer for the corral."
+        warning = (f"{w.temp_f:.0f}°F — hypothermia risk if you slow down late; "
+                   "keep a dry layer at the finish.")
+    else:
+        pacing = "Even splits — conditions are close to ideal for goal pace."
+        gear = "Singlet and shorts; no weather adjustment needed."
+        warning = (f"{w.temp_f:.0f}°F and {w.conditions} — no weather red flags; "
+                   "the risk is going out too fast.")
     strategy = RaceStrategy(
         target_finish="3:32:00",
-        pacing_advice="Start 20s/mile slower than goal pace to bank against the heat.",
+        pacing_advice=pacing,
         fueling_plan="Electrolytes every aid station.",
-        gear="Light singlet, cap, sunglasses.",
-        key_warning="78°F + 70% humidity — real heat-stroke risk at your usual 7:30 pace.",
+        gear=gear,
+        key_warning=warning,
     )
     body = (
         f"{question}\n\n"
@@ -137,6 +177,7 @@ async def ask(question: str) -> None:
         "gear_specialist", "nutrition_specialist", "mental_specialist",
     }
     dispatched: list[str] = []
+    returned: list[str] = []
     final_text = ""
     t0 = time.perf_counter()
     async for event in runner.run_async(
@@ -150,7 +191,18 @@ async def ask(question: str) -> None:
             if fc and fc.name in specialist_names and fc.name not in dispatched:
                 dispatched.append(fc.name)
                 print(f"  [t={time.perf_counter()-t0:4.1f}s] DISPATCH → {fc.name}")
-            if getattr(part, "text", None):
+            # Each specialist's answer coming back. Printing these timestamps is the
+            # evidence for the parallel claim: every DISPATCH shares one timestamp
+            # (one turn, many calls) and the REPLIES all land inside one short
+            # window — not spaced out end-to-end the way serial calls would be.
+            fr = getattr(part, "function_response", None)
+            if fr and fr.name in specialist_names and fr.name not in returned:
+                returned.append(fr.name)
+                print(f"  [t={time.perf_counter()-t0:4.1f}s]   ↩ {fr.name} replied")
+            # Only the COORDINATOR's text is the final answer. Specialists stream
+            # their raw JSON through this same event stream, so without this author
+            # check the last specialist's JSON blob can be printed as the answer.
+            if getattr(part, "text", None) and getattr(event, "author", None) == "race_concierge":
                 final_text = part.text
     print(f"\n  Specialists chosen: {dispatched or ['(none)']}")
     print(f"  Total time: {time.perf_counter()-t0:.1f}s")

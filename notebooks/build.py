@@ -36,6 +36,12 @@ def _strip_docstring(lines):
     return lines
 
 
+# Modules wrap local-only setup (the .env API-key preflight) in these markers.
+# Colab sets GOOGLE_API_KEY in an earlier cell, so the block is stripped there.
+LOCAL_ONLY_OPEN = "# [local-only]"
+LOCAL_ONLY_CLOSE = "# [/local-only]"
+
+
 def module_to_cell(src, drop_shared=True):
     """Transform a module's source into inline notebook-cell code."""
     lines = _strip_docstring(src.split("\n"))
@@ -49,6 +55,11 @@ def module_to_cell(src, drop_shared=True):
             i += 1; continue
         if s.startswith("load_dotenv("):
             i += 1; continue
+        if s == LOCAL_ONLY_OPEN:                        # drop a local-only block
+            while i < len(lines) and lines[i].strip() != LOCAL_ONLY_CLOSE:
+                i += 1
+            i += 1                                      # skip the closing marker
+            continue
         if drop_shared and (s.startswith("from shared import") or s.startswith("from .schemas import")):
             if "(" in ln and ")" not in ln:            # multiline parenthesized import
                 while i < len(lines) and ")" not in lines[i]:
@@ -180,13 +191,13 @@ LEVELS = [
      "Now a **deterministic `if`-statement router** branches on temperature to one of three specialized agents — hot / normal / cold. **Net cost: 1 LLM call.** 🔁 Try `run(\"NORMAL\")`.",
      "L2b_router/workflow.py", 'await run("HOT")'),
     ("L3", "🤝 L3 · Collaborative Agents — the Race Concierge (Pillar 2)",
-     "Known **team** (6 specialists 🩺🌦️⏱️🎽🥤🧠); the **question** picks who answers. The coordinator emits several delegation-tool calls in one turn; because the specialists are `mode=\"single_turn\"`, ADK runs the chosen subset **in parallel** (each in an isolated branch), then synthesizes one reply. 💡 Change the question and re-run — the contrast *is* the lesson!\n\n**The 3 collaboration modes** (set on **subagents only**, not the coordinator): `chat` = free multi-turn with the user (the default for a subagent); `task` = asks a clarifying question, then auto-returns; `single_turn` = no user interaction, auto-returns, **runs in parallel**. This demo uses `single_turn` — the only one that runs concurrently, which is the whole point here.\n\n*Note: occasionally a specialist returns prose not JSON and you'll see a validation warning — the coordinator recovers. 🙂*",
+     "Known **team** (6 specialists 🩺🌦️⏱️🎽🥤🧠); the **question** picks who answers. The coordinator emits several delegation-tool calls in one turn; because the specialists are `mode=\"single_turn\"`, ADK runs the chosen subset **in parallel** (each in an isolated branch), then synthesizes one reply. 💡 Change the question and re-run — the contrast *is* the lesson!\n\n**The 3 collaboration modes** — this is the first level that sets `mode` at all, because earlier levels' agents are *workflow nodes*, which already default to `single_turn`. Subagents default to `chat`, so here the argument does real work. Set it on **subagents only**, never the coordinator: `chat` = free multi-turn with the user (the subagent default); `task` = asks a clarifying question, then auto-returns; `single_turn` = no user interaction, auto-returns, **runs in parallel**. This demo uses `single_turn` — the only one that runs concurrently, which is the whole point here.\n\n*Note: occasionally a specialist returns prose not JSON and you'll see a validation warning — the coordinator recovers. 🙂*",
      "L3_collaborative/concierge.py", 'await ask("Should I race today?")'),
     ("L4a", "🌱 L4a · Runtime-Sized Fan-out — Deep Research (Pillar 3a)",
-     "An open-ended question is **decomposed** into N sub-questions (**width chosen at runtime**), each researched **in parallel**, then synthesized. One level deep — no recursion yet.\n\n⚠️ ~7-9 live LLM calls, ~20-30s.",
+     "An open-ended question is **decomposed** into N sub-questions (**width chosen at runtime**), each researched **in parallel**, then synthesized. One level deep — no recursion yet.\n\n⚠️ 5-9 live LLM calls (1 decompose + 3-7 research + 1 synthesize), ~20-30s.",
      "L4a_flat_research/deep_research.py", "await run()"),
     ("L4b", "🌳 L4b · Add Recursive Spawning (Pillar 3b)",
-     "Now each finding can **recursively spawn** deeper questions via `ctx.run_node` (**depth chosen at runtime**), safely bounded by `MAX_DEPTH`. Recursion runs **inside the framework** — you keep tracing & checkpointing. 🌲\n\n⚠️ ~10-17 live LLM calls, 20-45s.",
+     "Now each finding can **recursively spawn** deeper questions via `ctx.run_node` (**depth chosen at runtime**), safely bounded by `MAX_DEPTH`. Recursion runs **inside the framework** — you keep tracing & checkpointing. 🌲\n\n⚠️ 5-30 live LLM calls, 20-45s — ceiling = 1 + 7 + 7×3 + 1.",
      "L4b_recursion/deep_research.py", "await run()"),
 ]
 

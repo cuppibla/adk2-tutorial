@@ -16,6 +16,8 @@ Run it:
 from __future__ import annotations
 
 import asyncio
+import os
+import sys
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -25,6 +27,18 @@ from google.adk.workflow import START
 from google.adk.sessions import InMemorySessionService
 
 load_dotenv()
+
+# [local-only]
+# Fail fast with one readable line. Without this, a missing key surfaces ~290
+# lines of ADK/asyncio traceback with the real cause on the very last line.
+if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
+    sys.exit(
+        "\u2717 No API key found.\n"
+        "  cp .env.example .env  then add GOOGLE_API_KEY=...\n"
+        "  Get a free key at https://aistudio.google.com/apikey"
+    )
+# [/local-only]
+
 
 MODEL = "gemini-flash-latest"
 
@@ -41,7 +55,11 @@ class Conditions(BaseModel):
 
 def fetch_conditions(node_input):
     """In a real app this hits a weather API. Here it returns canned data.
-    A function node returns its result wrapped in an Event."""
+
+    Returning `Event(output=...)` is the explicit form. A function node may also
+    return a bare value or a pydantic model and ADK wraps it for you — the explicit
+    form is used here because L2b needs its sibling, `Event(output=..., route=...)`.
+    """
     data = Conditions(temp_f=78, wind_mph=12, conditions="sunny")
     print(f"  [fetch_conditions] (function node, 0 LLM) → {data.model_dump()}")
     return Event(output=data.model_dump())
@@ -52,7 +70,6 @@ def fetch_conditions(node_input):
 advise = Agent(
     name="advise",
     model=MODEL,
-    mode="single_turn",
     input_schema=Conditions,  # receives the function node's output, validated
     instruction=(
         "You are a marathon coach. Given today's race-day conditions, give the "

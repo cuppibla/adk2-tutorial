@@ -14,7 +14,9 @@ The takeaway — three kinds of work, three homes:
   • A clear rule    → EXPLICIT ROUTING (route_by_weather is an if-statement)
   • Reasoning       → THE MODEL (exactly ONE strategy agent writes the answer)
 
-Net cost: 1 LLM call. The ADK 1.x way needs a model call per fetch (4 total).
+Net cost: 1 LLM call. To be fair to 1.x: a custom `BaseAgent` subclass could keep
+these steps out of the model there too — but you wrote the orchestration plumbing
+yourself, so most builds wrapped each step as an agent and paid 4 calls.
 
 Run it:
     python -m L2b_router.workflow          # HOT — Boston, 78°F
@@ -37,6 +39,18 @@ from google.adk.sessions import InMemorySessionService
 from shared import BundledRunData, RaceStrategy, scenario, slow_mo
 
 load_dotenv()
+
+# [local-only]
+# Fail fast with one readable line. Without this, a missing key surfaces ~290
+# lines of ADK/asyncio traceback with the real cause on the very last line.
+if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
+    sys.exit(
+        "\u2717 No API key found.\n"
+        "  cp .env.example .env  then add GOOGLE_API_KEY=...\n"
+        "  Get a free key at https://aistudio.google.com/apikey"
+    )
+# [/local-only]
+
 
 MODEL = "gemini-flash-latest"
 
@@ -86,7 +100,7 @@ short sentences.
 """
 
 hot_strategy = Agent(
-    name="hot_strategy", model=MODEL, mode="single_turn",
+    name="hot_strategy", model=MODEL,
     input_schema=BundledRunData, output_schema=RaceStrategy,
     instruction=f"""You are a marathon coach planning a race in HOT conditions.
 Heat is the primary risk: slow down, hydrate aggressively, dress cool, set a
@@ -94,7 +108,7 @@ goal time SLOWER than ideal.{_FMT}""",
 )
 
 normal_strategy = Agent(
-    name="normal_strategy", model=MODEL, mode="single_turn",
+    name="normal_strategy", model=MODEL,
     input_schema=BundledRunData, output_schema=RaceStrategy,
     instruction=f"""You are a marathon coach planning a race in IDEAL conditions.
 This is a PR-attempt day. Recommend even or slightly negative splits; the main
@@ -102,7 +116,7 @@ risk is going out too fast on cool, fast-feeling pavement.{_FMT}""",
 )
 
 cold_strategy = Agent(
-    name="cold_strategy", model=MODEL, mode="single_turn",
+    name="cold_strategy", model=MODEL,
     input_schema=BundledRunData, output_schema=RaceStrategy,
     instruction=f"""You are a marathon coach planning a race in COLD conditions.
 Recommend layered, shed-able gear, a careful warm-up, and fueling that accounts

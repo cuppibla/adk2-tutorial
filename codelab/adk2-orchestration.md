@@ -130,7 +130,7 @@ print("✅ API key set — using Google AI Studio.")
 Run the **Shared building blocks** cell once. It defines the Pydantic schemas + canned marathon scenarios that every level from L2 onward reuses. You'll see `✓ schemas + scenarios ready`.
 
 > aside positive
-> **Structured I/O** is how ADK 2 moves typed data between function nodes and agents. An agent with `output_schema=RaceStrategy` is *forced* to emit valid JSON for that model; the next node receives it as a typed object — no parsing glue.
+> **Structured I/O** is how ADK 2 moves typed data between function nodes and agents. An agent with `output_schema=RaceStrategy` is *forced* to emit valid JSON for that model, and the next node receives it **validated** — no parsing glue. It arrives as a plain **dict** (JSON text for an agent node), so you index it (`node_input["fetch_weather"]["temp_f"]`) rather than reaching for attributes.
 
 You're set up! 🎽 On to **L0**.
 
@@ -194,7 +194,7 @@ advise = Agent(name="advise", model=MODEL, mode="single_turn",
 l1_workflow = Workflow(edges=[(START, fetch_conditions, advise)])
 ```
 
-**What's new vs L0:** `Workflow(edges=[...])`, `START` (where input enters), a function node returning `Event(output=...)`, and `input_schema=Conditions` so the agent receives the function's output as a typed object.
+**What's new vs L0:** `Workflow(edges=[...])`, `START` (where input enters), a function node returning `Event(output=...)`, and `input_schema=Conditions` so the function's output is validated against that schema before the agent sees it (as JSON text — `input_schema` validates the boundary, it does not hand the agent a Python object).
 
 ## L2a · Parallel fan-out + JoinNode (Pillar 1a)
 Duration: 4
@@ -219,10 +219,10 @@ START ──► pull_fitness ───┘   (bundles)
 - **`JoinNode`** waits for all three and bundles them into one typed payload (`BundledRunData`), keyed by function name.
 - One `strategy` agent reads the bundle and writes a `RaceStrategy`.
 
-**What you'll see:** the strategy cites real numbers, and the wall time is near the *slowest* fetch (~2s) rather than the sum (~4.5s) — because the fetches ran concurrently.
+**What you'll see:** each fetch prints a `started` / `finished` timestamp. All three start at **0.0s** and the fan-out ends at **2.0s** — the slowest fetch, not the **4.5s** their durations would sum to. That overlap is the parallelism. (The *total* wall time printed at the end is ~8s because it also contains the strategy agent's LLM call — read the fetch timestamps for the parallel claim, not the total.)
 
 > aside positive
-> **Uniquely ADK 2:** function nodes and an agent node are peers in one `edges` list. In 1.x every node is an agent, so each fetch needs its own model call.
+> **Where ADK 2 gives this a direct home:** function nodes and an agent node are peers in one `edges` list. 1.x could keep steps out of the model too — via a custom `BaseAgent` subclass — but that meant writing the orchestration plumbing yourself, so most builds wrapped each step as an agent.
 
 ## L2b · Add the deterministic router (Pillar 1b)
 Duration: 4
@@ -261,7 +261,7 @@ def route_by_weather(node_input):                        # an if-statement, 0 LL
 **What you'll see:** `temp=78F -> route=HOT`, then a structured `RaceStrategy`. **Net cost: 1 LLM call.**
 
 > aside positive
-> The ADK 1.x way makes every node an agent, so each fetch needs its own model call — **4 calls** instead of this pattern's **1**.
+> The common 1.x build wrapped each step as an agent — **4 calls** instead of this pattern's **1**. (A custom `BaseAgent` subclass could reach 1 call in 1.x as well; it just wasn't first-class, so few builds did it.)
 
 ## L3 · Collaborative agents — Pillar 2
 Duration: 5
@@ -308,7 +308,7 @@ race_concierge = Agent(name="race_concierge", model=MODEL,
 
 ### The three collaboration modes
 
-A subagent's `mode` sets how much it interacts with the user and whether it can run in parallel. ADK 2 has three — set `mode` on **subagents only**, never on the coordinator:
+This is the first level that passes `mode` at all — and that's deliberate. A subagent's `mode` sets how much it interacts with the user and whether it can run in parallel. Earlier levels never set it because a **workflow node already defaults to `single_turn`**; here the agents are *subagents*, which default to `chat`, so the argument is doing real work. ADK 2 has three — set `mode` on **subagents only**, never on the coordinator:
 
 | Mode | Human in the loop | Parallel? | Returns to parent |
 | --- | --- | --- | --- |
@@ -322,7 +322,7 @@ A subagent's `mode` sets how much it interacts with the user and whether it can 
 > `mode` is for **subagents only** — don't set it on the coordinator. And a `task`-mode agent **cannot be a static node in a graph workflow**: `Workflow(...)` raises at construction time, because the scheduler overwrites a node's input with the latest user message on re-entry, which would lose the task brief. ADK's own error names the two ways around it — *"use a chat coordinator with task sub-agents"* (what this level does), *"or dispatch dynamically via `ctx.run_node` from a function node."*
 
 > aside positive
-> **Uniquely ADK 2:** an LLM picks a **per-request subset** AND runs it in parallel. In 1.x, `ParallelAgent` is always-all and `transfer_to_agent` is serial — neither does dynamic-subset-in-parallel.
+> **Where ADK 2 gives this a direct home:** an LLM picks a **per-request subset** AND runs it in parallel — *declared* via `sub_agents` + `mode="single_turn"`. You could assemble the same shape in 1.x by wrapping each specialist in `AgentTool`; what changes is that it is now a declaration rather than plumbing. (`ParallelAgent` is always-all and `transfer_to_agent` is serial.)
 
 > aside negative
 > Two honest caveats: (1) the model picks the subset, so it's **less deterministic** than L2's hard-coded router — the exact subset can vary run to run. (2) Occasionally a specialist returns prose instead of clean JSON and you'll see a schema-validation warning in the logs — the coordinator recovers and still synthesizes.
@@ -345,7 +345,7 @@ START ─► decompose ─► research_topic (parallel_worker) ─► synthesize
 An open-ended question is **decomposed** into N sub-questions — **N is chosen by the LLM at runtime** (3–7) — each **researched in parallel**, then **synthesized** into one briefing.
 
 > aside negative
-> This cell makes **~7–9 live LLM calls** and takes **~20–30s**. It costs real API quota.
+> This cell makes **5–9 live LLM calls** (1 decompose + 3–7 research + 1 synthesize) and takes **~20–30s**. It costs real API quota.
 
 ▶ **Colab:** run the [`L4a` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L4a) · 📁 **GitHub:** [`L4a_flat_research/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4a_flat_research) · 💻 **Local:** `python -m L4a_flat_research.deep_research`
 
@@ -354,7 +354,7 @@ An open-ended question is **decomposed** into N sub-questions — **N is chosen 
 **What you'll see:** the decomposer prints e.g. 5 sub-questions, they research in parallel, then a synthesized briefing. The *number* differs on every run — the fixed graph couldn't do that.
 
 > aside positive
-> **Uniquely ADK 2 (so far):** `@node(parallel_worker=True)` fans one worker across a **runtime-sized** list. A 1.x `ParallelAgent` needs a fixed list known at build time.
+> **Where ADK 2 gives this a direct home:** `@node(parallel_worker=True)` fans one worker across a **runtime-sized** list. A 1.x `ParallelAgent` needs a fixed list known at build time; raw `asyncio` could size it at runtime, but then it is no longer a workflow ADK can trace.
 
 ## L4b · Add recursive spawning (Pillar 3b)
 Duration: 5
@@ -374,7 +374,7 @@ START ─► decompose ─► research_topic (parallel_worker, recursive) ─►
 ```
 
 > aside negative
-> This cell makes **~10–17 live LLM calls** and takes **20–45s**. Run it deliberately.
+> This cell makes **5–30 live LLM calls** and takes **20–45s** — the ceiling is 1 decompose + 7 top-level + 7×3 children + 1 synthesize. Run it deliberately.
 
 ▶ **Colab:** run the [`L4b` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L4b) · 📁 **GitHub:** [`L4b_recursion/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4b_recursion) · 💻 **Local:** `python -m L4b_recursion.deep_research`
 
@@ -392,7 +392,7 @@ async def research_topic(ctx, node_input):
 **What you'll see:** research nodes printing `spawning N deeper` — recursion happening live — then a runtime tree shape (e.g. `5 top-level + 10 recursive children`). The tree differs on every run.
 
 > aside positive
-> **Uniquely ADK 2:** runtime-sized *and* runtime-deep parallel fan-out with recursive `ctx.run_node`, all **inside the framework** — you keep tracing, checkpointing, and resumability. In 1.x, real recursion forces you out to raw `asyncio` and you lose all of it.
+> **Where ADK 2 gives this a direct home:** runtime-sized *and* runtime-deep parallel fan-out with recursive `ctx.run_node`, all **inside the framework** — you keep tracing, checkpointing, and resumability. 1.x could recurse too, but only by dropping out to raw `asyncio`, which lost you all of that.
 
 > aside positive
 > **The rule:** *let the LLM shape the work, but keep the boundaries in code.* `MAX_DEPTH = 2` means depth-2 children cannot spawn — there is no depth 3. Width is bounded too (3–7 sub-questions).
@@ -422,8 +422,8 @@ This is **not** "2.0 can do things 1.x couldn't" — 1.x could build all of it. 
 
 | Pattern | The 1.x cost | The ADK 2 home |
 | --- | --- | --- |
-| **Graph** | 4 LLM calls; routing hidden in a prompt | function + agent nodes as peers → 1 call, `if`-statement router |
-| **Collaborative** | always-all or serial delegation | per-request subset, run in parallel |
+| **Graph** | 4 LLM calls in the common build; routing hidden in a prompt | function + agent nodes as peers → 1 call, `if`-statement router |
+| **Collaborative** | buildable via `AgentTool` plumbing; `ParallelAgent` always-all, `transfer_to_agent` serial | a **declared** team: `sub_agents` + `mode="single_turn"` |
 | **Dynamic** | recursion drops you out of the framework | `parallel_worker` + recursive `ctx.run_node` inside the framework |
 
 ### They compose

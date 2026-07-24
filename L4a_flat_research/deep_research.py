@@ -16,12 +16,14 @@ Run it:
     python -m L4a_flat_research.deep_research
     python -m L4a_flat_research.deep_research "How should I train for my first marathon in 6 months?"
 
-NOTE: makes several live LLM calls (~7-9). Costs real API quota.
+NOTE: makes several live LLM calls (5-9: 1 decompose + 3-7 research + 1 synthesize).
+Costs real API quota.
 """
 from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 import time
 
@@ -36,13 +38,25 @@ from shared import DecomposerOutput, DeepResearchBriefing, ResearchFinding
 
 load_dotenv()
 
+# [local-only]
+# Fail fast with one readable line. Without this, a missing key surfaces ~290
+# lines of ADK/asyncio traceback with the real cause on the very last line.
+if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
+    sys.exit(
+        "\u2717 No API key found.\n"
+        "  cp .env.example .env  then add GOOGLE_API_KEY=...\n"
+        "  Get a free key at https://aistudio.google.com/apikey"
+    )
+# [/local-only]
+
+
 MODEL = "gemini-flash-latest"
 
 
 # ─── Three single-turn agents: decompose, research, synthesize. ───────────────
 
 decompose_agent = Agent(
-    name="decompose_agent", model=MODEL, mode="single_turn",
+    name="decompose_agent", model=MODEL,
     output_schema=DecomposerOutput,
     instruction="""You are a research coordinator for marathon/endurance questions.
 Break the user's open-ended question into 3-7 specific, non-overlapping,
@@ -50,7 +64,7 @@ independently-researchable sub-questions, each covering a distinct angle.""",
 )
 
 research_agent = Agent(
-    name="research_agent", model=MODEL, mode="single_turn",
+    name="research_agent", model=MODEL,
     output_schema=ResearchFinding,
     instruction="""You are a marathon research specialist. Given ONE specific
 research question, produce a finding: a 2-3 sentence summary and 3-5 specific
@@ -58,7 +72,7 @@ insights. (For this level, keep needs_deeper=False.)""",
 )
 
 synthesize_agent = Agent(
-    name="synthesize_agent", model=MODEL, mode="single_turn",
+    name="synthesize_agent", model=MODEL,
     output_schema=DeepResearchBriefing,
     instruction="""You are a marathon coach synthesizing a JSON list of findings
 into one briefing for the runner: a HEADLINE, 3-6 thematic SECTIONS with specific

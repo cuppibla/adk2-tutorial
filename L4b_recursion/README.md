@@ -16,7 +16,7 @@ START ─► decompose ─► research_topic (parallel_worker, recursive) ─►
 python -m L4b_recursion.deep_research
 python -m L4b_recursion.deep_research "What are the most common mistakes new marathoners make?"
 ```
-> ⚠️ ~10–17 live LLM calls, 20–45s. Run it deliberately.
+> ⚠️ 5–30 live LLM calls, 20–45s. Run it deliberately — the ceiling is 1 decompose + 7 top-level + 7×3 children + 1 synthesize.
 
 ## What you'll see
 Research nodes printing `spawning N deeper` — recursion happening live — then a runtime tree shape (e.g. `5 top-level + 10 recursive children`) and a synthesized briefing. The tree differs every run.
@@ -27,7 +27,9 @@ Research nodes printing `spawning N deeper` — recursion happening live — the
 
 > **The rule:** *let the LLM shape the work, but keep the boundaries in code.* `MAX_DEPTH = 2` means depth-2 children cannot spawn — there is no depth 3.
 
-> **Uniquely ADK 2:** in 1.x, real recursion forces you out to raw `asyncio` and you lose the framework machinery.
+> ⚠️ **Before you raise it:** the ceiling grows fast — `MAX_DEPTH=3` takes the worst case from ~30 calls to ~93. The run summary also only counts children one level down, so it will under-report past depth 2.
+
+> **Where ADK 2 gives this a direct home:** recursion was always buildable in 1.x — but only by dropping out to raw `asyncio`, which cost you the framework machinery (tracing, checkpointing) for exactly the part of the system that needed it most.
 
 > You may see `cancelling N leftover tasks` at the end — ADK tearing down its parallel task group. Harmless.
 

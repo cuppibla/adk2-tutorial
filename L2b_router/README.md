@@ -29,6 +29,8 @@ python -m L2b_router.workflow COLD      # Chicago, 35°F
 - A **dict edge** `(route_by_weather, {"HOT": ..., "NORMAL": ..., "COLD": ...})` picks exactly one branch.
 - Three **specialized** strategy agents replace L2a's single generic one.
 
-> **Uniquely ADK 2:** the ADK 1.x way makes every node an agent, so each fetch needs its own model call — 4 calls instead of this pattern's 1.
+> ⚠️ **If you add a fourth branch,** give the route-dict a `DEFAULT_ROUTE` entry too. A route the dict doesn't match isn't an error — the branch simply ends, and the program exits **0 with no output**, which is a confusing dead end to debug.
+
+> **Where ADK 2 gives this a direct home:** 1.x could reach 1 call too — via a custom `BaseAgent` subclass — but only if you wrote the orchestration plumbing yourself, so most builds wrapped each step as an agent and paid 4. Here a plain function and an `if`-statement are first-class nodes.
 
 → **Next:** [L3](../L3_collaborative/) — when the *request* (not you) decides which specialists run.

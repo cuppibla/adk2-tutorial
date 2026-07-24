@@ -28,12 +28,14 @@ python -m L3_collaborative.concierge "Anything I should worry about overall?"
 ## What you'll see
 `DISPATCH → medical_specialist` lines show exactly which subset the coordinator chose, then a single synthesized answer. Ask two different questions and watch the subset change — that contrast *is* the lesson.
 
-## What's uniquely ADK 2
+## Where ADK 2 gives this a direct home
 - **`Agent(sub_agents=[...])`** — a coordinator over specialists declared **`mode="single_turn"`**.
-- The coordinator picks a **per-request subset** and ADK runs it **in parallel**. In 1.x, `ParallelAgent` is always-all and `transfer_to_agent` is serial — neither does dynamic-subset-in-parallel.
+- The coordinator picks a **per-request subset** and ADK runs it **in parallel**.
+- **Honest about 1.x:** you could build this shape there by wrapping each specialist in `AgentTool` — the LLM picked the subset and 1.x already dispatched multiple function calls in one turn concurrently. What ADK 2 changes is that the team becomes **declarative**: `sub_agents` plus one `mode` argument, instead of hand-assembled tool plumbing. (`ParallelAgent` is always-all and `transfer_to_agent` is serial — those were never the right tool for this.)
 
-**Two honest caveats (LLMs are nondeterministic):**
+**Three honest caveats:**
+- The run opens with `UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled` — ADK flagging that the specialists' pydantic `input_schema` uses its experimental JSON-schema path for tool declarations. Harmless, once per run.
 - The model picks the subset, so it's **less deterministic** than L2's hard-coded router. The exact subset can vary run to run.
-- Occasionally a specialist returns prose instead of clean JSON and you'll see a schema-validation warning in the logs — the coordinator recovers and still synthesizes. That's LLM nondeterminism, not a bug in the flow.
+- Occasionally you'll see an `Error validating input: ...` line for one specialist. It is almost never the specialist's *output* — `output_schema` makes Gemini enforce that server-side. It's the **input**: the coordinator has to reproduce the whole nested `SpecialistInput` verbatim for every parallel call, and sometimes it fumbles one. ADK returns the error as that tool's result, the coordinator recovers, and the synthesis still lands. LLM nondeterminism, not a bug in the flow.
 
 → **Next:** [L4a](../L4a_flat_research/) — when even the *shape* of the work is unknown until runtime (then [L4b](../L4b_recursion/) makes it recursive).
