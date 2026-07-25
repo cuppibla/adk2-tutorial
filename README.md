@@ -81,7 +81,9 @@ Always run levels as **modules from the repo root** (`python -m L2b_router.workf
 - **Model:** `gemini-flash-latest`.
 - **Cost:** L0–L2b are cheap (0–1 model call each). L3 makes a handful. **L4a is 5–9 calls; L4b is 5–30 per run** — run those deliberately.
 
-> **Version note.** Verified on **2.3.0** (latest stable) and also on 2.0.0b1 — the graph / collaborative / dynamic APIs (`Workflow(edges=...)`, `JoinNode`, `@node(parallel_worker=True)`, `Agent(mode="single_turn")`) are unchanged across the ADK 2 line so far. If a future release breaks them, re-verify and bump the pin.
+> **Version note.** Verified on **2.3.0** and on 2.0.0b1. Every API this tutorial uses (`Workflow(edges=...)`, `JoinNode`, `@node(parallel_worker=True)`, `Agent(sub_agents=..., mode="single_turn")`) behaves identically on both.
+>
+> The ADK 2 line is **not** frozen, though: `mode="task"` could not be a static workflow graph node on 2.0.0b1–2.3.0 (`Workflow()` raised at construction) and **can** on 2.5.0. This tutorial never uses `task` mode, so the pin is safe — but don't assume "ADK 2.x" is one behavior surface. Re-verify when you bump.
 
 ## Repo layout
 ```
