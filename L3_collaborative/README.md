@@ -33,6 +33,16 @@ python -m L3_collaborative.concierge "Anything I should worry about overall?"
 - The coordinator picks a **per-request subset** and ADK runs it **in parallel**.
 - **Honest about 1.x:** you could build this shape there by wrapping each specialist in `AgentTool` — the LLM picked the subset and 1.x already dispatched multiple function calls in one turn concurrently. What ADK 2 changes is that the team becomes **declarative**: `sub_agents` plus one `mode` argument, instead of hand-assembled tool plumbing. (`ParallelAgent` is always-all and `transfer_to_agent` is serial — those were never the right tool for this.)
 
+## Why each specialist gets handed the whole briefing
+
+Each `single_turn` subagent runs in its **own isolated session branch**. While they run in parallel, a specialist sees only events from its own branch — it cannot see the conversation, or what its peers are saying. When all branches finish, the coordinator collects the results.
+
+That isolation is why the coordinator has to forward the *entire* `SpecialistInput` — question, strategy, and runner data — separately into every parallel call. Nothing is ambient; each specialist gets a self-contained briefing or it gets nothing. It's also the reason for the input-validation caveat below: that briefing is a large nested object, and the coordinator has to reproduce it correctly once per specialist.
+
+## Only one of the three modes runs here
+
+Pillar 2 is about *parallelism*, and `single_turn` is the only mode that runs in parallel — so it's the only one this level executes. `chat` and `task` are in the table above so you can place them, but you won't build one in this lab. Getting them hands-on (a runnable `task` agent, `finish_task`, and the graph-node-vs-transfer return behavior) is a separate study.
+
 **Three honest caveats:**
 - The run opens with `UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled` — ADK flagging that the specialists' pydantic `input_schema` uses its experimental JSON-schema path for tool declarations. Harmless, once per run.
 - The model picks the subset, so it's **less deterministic** than L2's hard-coded router. The exact subset can vary run to run.

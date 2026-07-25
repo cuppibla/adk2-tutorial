@@ -318,6 +318,9 @@ This is the first level that passes `mode` at all — and that's deliberate. A s
 
 **Why this demo uses `single_turn`:** each specialist answers *independently* from the strategy + runner data it's handed — no user Q&A needed — and `single_turn` is the only mode that runs **in parallel**. That's exactly the Pillar 2 point: a dynamic subset, run concurrently. Reach for `chat` when a subagent needs a free back-and-forth with the user, or `task` when it must ask one clarifying question before finishing.
 
+> aside positive
+> **Scope check — this codelab runs one of the three modes.** Pillar 2 is about *parallelism*, and only `single_turn` runs in parallel, so that's the mode you'll actually execute here. `chat` and `task` are in the table above for orientation; you won't build one in this codelab. If you want them hands-on — a runnable `task` agent, `finish_task` firing, and how the *same* agent returns differently depending on whether it was a graph node or a transfer target — that's a separate study, not a missing rung of this ladder.
+
 > aside negative
 > `mode` is for **subagents only** — don't set it on the coordinator. Two documented limitations on `task` mode:
 >
