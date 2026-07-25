@@ -319,7 +319,10 @@ This is the first level that passes `mode` at all — and that's deliberate. A s
 **Why this demo uses `single_turn`:** each specialist answers *independently* from the strategy + runner data it's handed — no user Q&A needed — and `single_turn` is the only mode that runs **in parallel**. That's exactly the Pillar 2 point: a dynamic subset, run concurrently. Reach for `chat` when a subagent needs a free back-and-forth with the user, or `task` when it must ask one clarifying question before finishing.
 
 > aside negative
-> `mode` is for **subagents only** — don't set it on the coordinator. And a `task`-mode agent **cannot be a static node in a graph workflow**: `Workflow(...)` raises at construction time, because the scheduler overwrites a node's input with the latest user message on re-entry, which would lose the task brief. ADK's own error names the two ways around it — *"use a chat coordinator with task sub-agents"* (what this level does), *"or dispatch dynamically via `ctx.run_node` from a function node."*
+> `mode` is for **subagents only** — don't set it on the coordinator. Two documented limitations on `task` mode:
+>
+> 1. **It's disabled in graph-based workflows** (expected to be re-enabled in a future release). `Workflow(...)` raises at construction: the scheduler overwrites a node's input with the latest user message on re-entry, which would lose the task brief. ADK's own error names the two ways around it — *"use a chat coordinator with task sub-agents"* (what this level does), *"or dispatch dynamically via `ctx.run_node` from a function node."*
+> 2. **A `task` agent must be a leaf** — it cannot have subagents of its own. Note this one is a documented contract, not a runtime guard: ADK 2.3.0 won't stop you from nesting, so don't take silence as permission.
 
 > aside positive
 > **Where ADK 2 gives this a direct home:** an LLM picks a **per-request subset** AND runs it in parallel — *declared* via `sub_agents` + `mode="single_turn"`. You could assemble the same shape in 1.x by wrapping each specialist in `AgentTool`; what changes is that it is now a declaration rather than plumbing. (`ParallelAgent` is always-all and `transfer_to_agent` is serial.)
