@@ -410,15 +410,36 @@ Duration: 3
 
 You've built all three. This is the model that makes them useful: **match the pattern to the shape of your problem.**
 
+### The axis: who decides what runs next?
+
+| Pillar | Who decides what runs next | Built in |
+| --- | --- | --- |
+| **1 · Graph** | the graph you drew | L2a / L2b |
+| **2 · Collaborative** | the LLM | L3 |
+| **3 · Dynamic** | your Python code, at runtime | L4a / L4b |
+
+### Step 0: do you even need a graph?
+
+ADK ships **prebuilt workflow agents** — `SequentialAgent`, `ParallelAgent`, `LoopAgent`. For a plain chain of agents, those are the cheapest correct answer and there's no graph to assemble. Reach past them when you need **explicit routing** (L2b's router), a **join** (L2a's `JoinNode`), or **nodes that aren't agents** (a plain function, zero LLM calls) — that last one is usually the reason.
+
 ```
-Can you draw the workflow before the input arrives?
+Would a prebuilt SequentialAgent / ParallelAgent / LoopAgent do?
 │
-├─ YES ─────────────────────────────► Pillar 1 · Graph workflow      (L2a/L2b)
+├─ YES ──────────────────────────────► use it; stop here
 │
-└─ NO
-   ├─ Known team, request picks the subset? ─► Pillar 2 · Collaborative  (L3)
-   └─ Does the shape depend on the input?  ──► Pillar 3 · Dynamic         (L4a/L4b)
+└─ NO — I need routing, a join, or non-agent nodes
+   │
+   Can you draw the workflow before the input arrives?
+   │
+   ├─ YES ───────────────────────────► Pillar 1 · Graph workflow    (L2a/L2b)
+   │
+   └─ NO
+      ├─ Known team, request picks the subset? ─► Pillar 2 · Collaborative  (L3)
+      └─ Does the shape depend on the input?  ──► Pillar 3 · Dynamic        (L4a/L4b)
 ```
+
+> aside negative
+> **What this codelab did not teach you.** Eight rungs, ~30 minutes — the scope is deliberate. **Loops** (generate → review → fix in a `while`) are the canonical dynamic shape and aren't here; neither is **human input** (`RequestInput`); and L4b's **resumability** is asserted but never demonstrated. Only one of the three collaboration modes (`single_turn`) actually runs. All of it is covered in the companion repo [**adk-workflows-compared**](https://github.com/cuppibla/adk-workflows-compared) — see [`07_loop`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/07_loop), [`17_request_input`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/17_request_input), and [`docs/three-pillars.md`](https://github.com/cuppibla/adk-workflows-compared/blob/main/docs/three-pillars.md).
 
 ![L5 · which pattern](img/diagram-table.png)
 

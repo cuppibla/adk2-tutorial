@@ -274,15 +274,22 @@ for cid, title, intro, modpath, driver in LEVELS:
 cells.append(md("""---
 ## 🧭 L5 · Which Pattern, When? (the finish line 🏁)
 
-One question picks your pattern:
+**The axis — who decides what runs next?** 🚦 the graph you drew (Pillar 1) · 🤝 the LLM (Pillar 2) · 🌳 your Python code at runtime (Pillar 3).
+
+**Step 0 — do you even need a graph?** ADK ships prebuilt `SequentialAgent` / `ParallelAgent` / `LoopAgent`. For a plain chain those are the cheapest right answer. Reach past them when you need explicit routing, a join, or nodes that aren't agents (a plain function, 0 LLM calls) 👇
 
 ```
-Can you draw the workflow before the input arrives?
-├─ YES ───────────────────────────────► Pillar 1 · graph workflow   (L2a/L2b) 🚦
-└─ NO
-   ├─ Known team, request picks the subset? ─► Pillar 2 · collaborative (L3) 🤝
-   └─ Does the shape depend on the input?  ──► Pillar 3 · dynamic       (L4a/L4b) 🌳
+Would a prebuilt SequentialAgent / ParallelAgent / LoopAgent do?
+├─ YES ───────────────────────────────► use it; stop here ✅
+└─ NO — I need routing, a join, or non-agent nodes
+   Can you draw the workflow before the input arrives?
+   ├─ YES ────────────────────────────► Pillar 1 · graph workflow   (L2a/L2b) 🚦
+   └─ NO
+      ├─ Known team, request picks the subset? ─► Pillar 2 · collaborative (L3) 🤝
+      └─ Does the shape depend on the input?  ──► Pillar 3 · dynamic       (L4a/L4b) 🌳
 ```
+
+*Not covered in this notebook:* loops (`while` generate→review→fix), human input (`RequestInput`), and demonstrated resume — plus the other two collaboration modes. All in the companion repo [adk-workflows-compared](https://github.com/cuppibla/adk-workflows-compared). 📚
 
 **Not** "2.0 can do what 1.x couldn't" — 1.x could build all of it. 2.0 gives each shape a **more direct home**, so known control flow leaves the prompt and becomes structure you can see and test. And they **compose**: a graph node can call a collaborative coordinator; a specialist can launch a dynamic workflow. 🧩
 
