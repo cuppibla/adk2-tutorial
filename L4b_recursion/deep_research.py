@@ -34,7 +34,7 @@ import time
 from dotenv import load_dotenv
 
 from google.adk import Agent, Event, Runner, Workflow
-from google.adk.workflow import START, node
+from google.adk.workflow import RetryConfig, START, node
 from google.adk.sessions import InMemorySessionService
 from google.genai import types as gtypes
 
@@ -119,7 +119,22 @@ async def decompose(ctx, node_input):
     yield Event(output=[{"question": q, "depth": 1, "original_query": user_query} for q in plan.sub_questions])
 
 
-@node(parallel_worker=True, rerun_on_resume=True)
+# ─── Bounding the RATE, not just the shape. ───────────────────────────────────
+#
+# The fan-out width is already bounded by the schema (max_length=7). This bounds
+# how it FAILS: a parallel worker cancels every sibling and re-raises the moment
+# one child raises, so without a retry a single transient 429 throws away a whole
+# run — including every call you already paid for. `retry_config` is applied to
+# the INNER per-item node, so each branch retries on its own and a transient blip
+# is absorbed before it can take the others down.
+#
+# Note `max_concurrency` is a real field on the parallel worker but is NOT
+# reachable through the public `node()` API in ADK 2.3.0 — so on a rate-limited
+# key, the schema bound is what keeps the in-flight count sane.
+RESEARCH_RETRY = RetryConfig(max_attempts=3, initial_delay=2.0, backoff_factor=2.0)
+
+@node(parallel_worker=True, rerun_on_resume=True,
+      retry_config=RESEARCH_RETRY)
 async def research_topic(ctx, node_input):
     question = node_input["question"]
     depth = node_input["depth"]

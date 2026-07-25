@@ -23,7 +23,8 @@ The decomposer prints e.g. 5 sub-questions, they research in parallel, then a sy
 ## What's new
 - **`@node(parallel_worker=True)`** — one worker definition, fanned out across a runtime-sized list.
 - **`rerun_on_resume=True`** — required on any node that calls `ctx.run_node`. ADK raises a `ValueError` without it: on resume it has to re-execute the dispatching node to rebuild the children it spawned, since those aren't in the static graph.
-- The decomposer's `sub_questions` schema is bounded (`min_length=3, max_length=7`).
+- The decomposer's `sub_questions` schema is bounded (`min_length=3, max_length=7`) — that bounds the *shape*.
+- **`retry_config=` bounds the *failure*.** A parallel worker cancels every sibling and re-raises the instant one child fails, so one transient 429 would discard the whole run — including calls you already paid for. The retry is applied to the inner per-item node, so each branch retries independently and a blip is absorbed before it can take the others down. (`max_concurrency` exists on the worker but isn't reachable through the public `node()` API in 2.3.0.)
 
 > **Where ADK 2 gives this a direct home:** a 1.x `ParallelAgent` needs a fixed list known at build time. Here the list size is decided at runtime — you could still do it in 1.x by dropping to raw `asyncio`, but then the fan-out is no longer part of the workflow ADK can trace.
 
