@@ -41,7 +41,7 @@ That isolation is why the coordinator has to forward the *entire* `SpecialistInp
 
 ## Only one of the three modes runs here
 
-Pillar 2 is about *parallelism*, and `single_turn` is the only mode that runs in parallel — so it's the only one this level executes. `chat` and `task` are in the table above so you can place them, but you won't build one in this lab. Getting them hands-on (a runnable `task` agent, `finish_task`, and the graph-node-vs-transfer return behavior) is a separate study.
+Pillar 2 is about *parallelism*, and `single_turn` is the only mode that runs in parallel — so it's the only one this level executes. `chat` and `task` are in the table above so you can place them, but you won't build one in this lab. Getting them hands-on (a runnable `task` agent, `finish_task`, and the graph-node-vs-transfer return behavior) is covered in the companion repo [adk-workflows-compared](https://github.com/cuppibla/adk-workflows-compared) — see [`docs/agent-modes.md`](https://github.com/cuppibla/adk-workflows-compared/blob/main/docs/agent-modes.md) and the runnable [`22_agent_in_workflow`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/22_agent_in_workflow) (needs google-adk ≥ 2.5.0).
 
 **Three honest caveats:**
 - The run opens with `UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled` — ADK flagging that the specialists' pydantic `input_schema` uses its experimental JSON-schema path for tool declarations. Harmless, once per run.

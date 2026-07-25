@@ -2,9 +2,9 @@
 
 > Learn ADK 2's **three orchestration patterns** — graph workflows, collaborative agents, dynamic workflows — one runnable rung at a time, all through a single **Marathon Race Day Coach**.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb)
 
-<!-- ↑ This points at the shared Colab copy. After pushing the repo public you can switch to the auto-updating form: colab.research.google.com/github/<owner>/<repo>/blob/main/notebooks/adk2_orchestration.ipynb -->
+<!-- Loads notebooks/ straight from this repo, so it is always current. No manual Drive re-upload. -->
 
 There are three ways to take this tutorial. **All cover the same eight levels.**
 - **📖 Codelab (guided)** — a step-by-step walkthrough that wraps the Colab: [`codelab/adk2-orchestration.md`](codelab/). Best for following along start to finish.
@@ -105,7 +105,9 @@ run.sh                   # launch the ADK web UI (adk web) to browse all levels
 Each `LX/__init__.py` re-exports its main node as `root_agent` (`from .workflow import root as root_agent`) — that's what lets `adk web` discover it, matching the `adk_tutorial` layout.
 
 ### The three artifacts stay in sync
-The runnable `L*/` modules are the **single source of truth**. `notebooks/build.py` reads them and regenerates the Colab notebook (inlining `shared/`, stripping imports, adding stable cell ids). The [codelab](codelab/) deep-links each step to its notebook cell (`…ipynb#scrollTo=<id>`) and lists the matching `python -m …` command. Edit a module → run `python notebooks/build.py` → the notebook is current.
+The runnable `L*/` modules are the **single source of truth**. `notebooks/build.py` reads them and regenerates the Colab notebook (inlining `shared/`, stripping imports, adding stable cell ids). The [codelab](codelab/) deep-links each step to its notebook cell (`…ipynb#scrollTo=<id>`) and lists the matching `python -m …` command.
+
+Edit a module → run `python notebooks/build.py` → commit. Colab loads the notebook **straight from this repo**, so pushing is the whole sync step — there is no separate upload to keep in step.
 
 ## A note on running it (what "easy to run" honestly means)
 L3 opens with `UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled` — that's ADK noting that pydantic `input_schema`s on subagents go through its experimental JSON-schema path. Expected, harmless, prints once.

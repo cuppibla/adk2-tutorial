@@ -46,7 +46,7 @@ One app — a **Marathon Race Day Coach** — that shows all three orchestration
 
 Every step below maps to **one cell in the Colab notebook** and **one folder in the GitHub repo**. Pick either:
 
-- **▶ Colab (recommended):** [Open the notebook](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0) → run cells top to bottom.
+- **▶ Colab (recommended):** [Open the notebook](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb) → run cells top to bottom.
 - **💻 Local:** `git clone` the [repo](https://github.com/cuppibla/adk2-tutorial), `./setup_venv.sh`, then run each level as a module (`python -m …`) or browse them all with `./run.sh` (`adk web`).
 
 ## Setup & Authentication
@@ -56,7 +56,7 @@ Everything runs on a free **Google AI Studio** API key — no Google Cloud proje
 
 ### 1 · Open the notebook
 
-Click **[Open in Colab ▶](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0)**. You'll land on the notebook — a markdown intro, then one runnable cell per level. You run cells top to bottom; each prints its own output right below it.
+Click **[Open in Colab ▶](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb)**. You'll land on the notebook — a markdown intro, then one runnable cell per level. You run cells top to bottom; each prints its own output right below it.
 
 > aside positive
 > New to Colab? A **cell** is a block of code. Click it and press **Shift+Enter** (or the ▶ button on its left) to run it. Run them **in order** from the top.
@@ -72,7 +72,7 @@ Run the first code cell. It pins the exact version this codelab was verified on:
 Wait for it to finish — you'll see `✓ installed`. (The install takes ~30–60s the first time; it's cached after that.)
 
 > aside negative
-> Verified on **2.3.0** (latest stable) and 2.0.0b1 — the graph / collaborative / dynamic APIs are unchanged across the ADK 2 line so far. If a future release breaks them, re-verify and bump the pin.
+> Verified on **2.3.0** and 2.0.0b1 — every API this codelab uses behaves identically on both. But the ADK 2 line is **not** frozen: `mode="task"` could not be a static workflow graph node on 2.0.0b1–2.3.0 and **can** on 2.5.0. This codelab never uses `task` mode, so the pin is safe — just don't assume "ADK 2.x" is one behavior surface.
 
 ### 3 · Get your Gemini API key from AI Studio  *(~1 min)*
 
@@ -146,7 +146,7 @@ Duration: 3
 - **`Agent`** — the thing that reasons (a Gemini model + an instruction).
 - **`Runner`** — the thing that executes an agent inside a session and streams events.
 
-▶ **Colab:** run the [`L0` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L0) · 📁 **GitHub:** [`L0_first_agent/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L0_first_agent) · 💻 **Local:** `python -m L0_first_agent.agent`
+▶ **Colab:** run the [`L0` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L0) · 📁 **GitHub:** [`L0_first_agent/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L0_first_agent) · 💻 **Local:** `python -m L0_first_agent.agent`
 
 ![L0 flow](img/diagram-l0.png)
 
@@ -178,7 +178,7 @@ Duration: 4
 START ──► fetch_conditions (function, 0 LLM) ──► advise (agent, 1 LLM)
 ```
 
-▶ **Colab:** run the [`L1` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L1) · 📁 **GitHub:** [`L1_graph_basics/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L1_graph_basics) · 💻 **Local:** `python -m L1_graph_basics.workflow`
+▶ **Colab:** run the [`L1` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L1) · 📁 **GitHub:** [`L1_graph_basics/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L1_graph_basics) · 💻 **Local:** `python -m L1_graph_basics.workflow`
 
 ![L1 flow](img/diagram-l1.png)
 
@@ -211,7 +211,7 @@ START ──► analyze_course ─┼─► JoinNode ─► strategy (1 agent)
 START ──► pull_fitness ───┘   (bundles)
 ```
 
-▶ **Colab:** run the [`L2a` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L2a) · 📁 **GitHub:** [`L2a_parallel_join/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2a_parallel_join) · 💻 **Local:** `python -m L2a_parallel_join.workflow`
+▶ **Colab:** run the [`L2a` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L2a) · 📁 **GitHub:** [`L2a_parallel_join/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2a_parallel_join) · 💻 **Local:** `python -m L2a_parallel_join.workflow`
 
 ![L2a flow](img/diagram-l2a.png)
 
@@ -239,7 +239,7 @@ Duration: 4
                                 ─► cold_strategy
 ```
 
-▶ **Colab:** run the [`L2b` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L2b) — try `run("NORMAL")` / `run("COLD")` · 📁 **GitHub:** [`L2b_router/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2b_router) · 💻 **Local:** `python -m L2b_router.workflow COLD`
+▶ **Colab:** run the [`L2b` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L2b) — try `run("NORMAL")` / `run("COLD")` · 📁 **GitHub:** [`L2b_router/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2b_router) · 💻 **Local:** `python -m L2b_router.workflow COLD`
 
 ![L2b flow](img/diagram-l2b.png)
 
@@ -279,7 +279,7 @@ Duration: 5
 | "Should I race today?" | medical + weather + pacing |
 | "Anything I should worry about?" | all 6 |
 
-▶ **Colab:** run the [`L3` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L3) · 📁 **GitHub:** [`L3_collaborative/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L3_collaborative) · 💻 **Local:** `python -m L3_collaborative.concierge "Should I race today?"`
+▶ **Colab:** run the [`L3` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L3) · 📁 **GitHub:** [`L3_collaborative/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L3_collaborative) · 💻 **Local:** `python -m L3_collaborative.concierge "Should I race today?"`
 
 ![L3 flow](img/diagram-l3.png)
 
@@ -319,7 +319,7 @@ This is the first level that passes `mode` at all — and that's deliberate. A s
 **Why this demo uses `single_turn`:** each specialist answers *independently* from the strategy + runner data it's handed — no user Q&A needed — and `single_turn` is the only mode that runs **in parallel**. That's exactly the Pillar 2 point: a dynamic subset, run concurrently. Reach for `chat` when a subagent needs a free back-and-forth with the user, or `task` when it must ask one clarifying question before finishing.
 
 > aside positive
-> **Scope check — this codelab runs one of the three modes.** Pillar 2 is about *parallelism*, and only `single_turn` runs in parallel, so that's the mode you'll actually execute here. `chat` and `task` are in the table above for orientation; you won't build one in this codelab. If you want them hands-on — a runnable `task` agent, `finish_task` firing, and how the *same* agent returns differently depending on whether it was a graph node or a transfer target — that's a separate study, not a missing rung of this ladder.
+> **Scope check — this codelab runs one of the three modes.** Pillar 2 is about *parallelism*, and only `single_turn` runs in parallel, so that's the mode you'll actually execute here. `chat` and `task` are in the table above for orientation; you won't build one in this codelab. If you want them hands-on — a runnable `task` agent, `finish_task` firing, and how the *same* agent returns differently depending on whether it was a graph node or a transfer target — see the companion repo [**adk-workflows-compared**](https://github.com/cuppibla/adk-workflows-compared): [`docs/agent-modes.md`](https://github.com/cuppibla/adk-workflows-compared/blob/main/docs/agent-modes.md) covers all three modes, and [`22_agent_in_workflow`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/22_agent_in_workflow) is a runnable `task` agent (needs google-adk ≥ 2.5.0).
 
 > aside negative
 > `mode` is for **subagents only** — don't set it on the coordinator. Two documented limitations on `task` mode:
@@ -353,7 +353,7 @@ An open-ended question is **decomposed** into N sub-questions — **N is chosen 
 > aside negative
 > This cell makes **5–9 live LLM calls** (1 decompose + 3–7 research + 1 synthesize) and takes **~20–30s**. It costs real API quota.
 
-▶ **Colab:** run the [`L4a` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L4a) · 📁 **GitHub:** [`L4a_flat_research/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4a_flat_research) · 💻 **Local:** `python -m L4a_flat_research.deep_research`
+▶ **Colab:** run the [`L4a` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L4a) · 📁 **GitHub:** [`L4a_flat_research/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4a_flat_research) · 💻 **Local:** `python -m L4a_flat_research.deep_research`
 
 ![L4a flow](img/diagram-l4a.png)
 
@@ -382,7 +382,7 @@ START ─► decompose ─► research_topic (parallel_worker, recursive) ─►
 > aside negative
 > This cell makes **5–30 live LLM calls** and takes **20–45s** — the ceiling is 1 decompose + 7 top-level + 7×3 children + 1 synthesize. Run it deliberately.
 
-▶ **Colab:** run the [`L4b` cell](https://colab.research.google.com/drive/1sIwliYa6T9tbW23cpRl3zKJw4MJTCIy0#scrollTo=L4b) · 📁 **GitHub:** [`L4b_recursion/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4b_recursion) · 💻 **Local:** `python -m L4b_recursion.deep_research`
+▶ **Colab:** run the [`L4b` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L4b) · 📁 **GitHub:** [`L4b_recursion/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4b_recursion) · 💻 **Local:** `python -m L4b_recursion.deep_research`
 
 ![L4b flow](img/diagram-l4b.png)
 
