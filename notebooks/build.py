@@ -12,6 +12,7 @@ Run from the repo root:
     python notebooks/build.py
 """
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -79,6 +80,32 @@ def read(rel):
     return (ROOT / rel).read_text()
 
 
+# ─── Single prose source ──────────────────────────────────────────────────────
+# The codelab (codelab/adk2-orchestration.md) is the ONE place teaching prose
+# lives. Regions wrapped in <!-- beat:X --> ... <!-- /beat:X --> markers are the
+# per-level teaching cores; claat ignores the HTML comments, and this script
+# extracts the same regions into the notebook's markdown cells. Edit the beat
+# in the codelab -> run this script -> both artifacts agree. (This replaced the
+# old hand-written summaries here, which had drifted from the codelab.)
+
+def extract_beats(text):
+    found = {}
+    for m in re.finditer(r"<!-- beat:(\w+) -->\n(.*?)\n<!-- /beat:\1 -->", text, re.S):
+        found.setdefault(m.group(1), []).append(m.group(2).strip())
+    out = {}
+    for k, parts in found.items():
+        s = "\n\n".join(parts)
+        # claat asides -> notebook-friendly quotes
+        s = s.replace("> aside positive\n> ", "> 💡 ")
+        s = s.replace("> aside negative\n> ", "> ⚠️ ")
+        assert "](img/" not in s, f"beat {k} contains an image ref - move it outside the markers"
+        out[k] = s
+    return out
+
+
+BEATS = extract_beats(read("codelab/adk2-orchestration.md"))
+
+
 # ─── Cells ────────────────────────────────────────────────────────────────────
 
 md = lambda src, cid: {"cell_type": "markdown", "metadata": {"id": cid}, "source": src}
@@ -94,7 +121,7 @@ Welcome, Agent Architect! 🎉 In this notebook you'll build a **Marathon Race D
 By the end of this adventure, you'll be able to:
 
 - 🧩 **Compose graph workflows** — mix plain functions and agents as peers, fan out in parallel, and route with a plain `if`-statement.
-- 🤝 **Coordinate collaborative agents** — let an LLM pick the *right* specialists for each question and run them in parallel.
+- 🤝 **Coordinate collaborative agents** — let an LLM pick the *right* specialists and run them in parallel, and choose the right **mode** (`chat` / `task` / `single_turn`) for every subagent.
 - 🌳 **Grow dynamic workflows** — let the LLM shape the work at runtime, with recursion kept safely bounded in code.
 
 | Level | Idea |
@@ -103,7 +130,8 @@ By the end of this adventure, you'll be able to:
 | **L1** 🔗 | first `Workflow`: a function node and an agent node are peers |
 | **L2a** 🌤️ | **Pillar 1a** — parallel fetch + `JoinNode` (one agent) |
 | **L2b** 🚦 | **Pillar 1b** — add the deterministic router → 1 of 3 agents |
-| **L3** 🤝 | **Pillar 2** — coordinator picks a dynamic subset of 6 specialists, in parallel |
+| **L3a** 🤝 | **Pillar 2** — same team, two worlds: `chat` strands the run; `single_turn` runs the subset in parallel |
+| **L3b** 🎽 | **Pillar 2** — `task` mode: clarify → pause → resume → `finish_task` |
 | **L4a** 🌱 | **Pillar 3a** — decompose → flat parallel research (runtime width) |
 | **L4b** 🌳 | **Pillar 3b** — add recursive spawning (runtime depth) |
 | **L5** 🧭 | which pattern, when (reading) |
@@ -114,7 +142,7 @@ By the end of this adventure, you'll be able to:
     ___       ___       ___       ___       ___
    |o o|     |^_^|     |•‿•|     |^o^|     |=^.^|
    |_-_|     |_-_|     |_-_|     |_-_|     |_-_|
-    L0        L1       L2a·b       L3      L4a·b·L5
+    L0        L1       L2a·b     L3a·b     L4a·b·L5
    ready →   flows →   graph →   team →   dynamic →  🏁
 ```
 
@@ -176,28 +204,34 @@ cells.append(md("""---
 Structured I/O is how ADK 2 moves typed data between function nodes and agents — like passing a clean baton 🏃‍♀️➡️🏃. These Pydantic schemas + canned marathon scenarios are reused from L2 onward. **Run this cell once**, then keep going.""", "shared_md"))
 cells.append(code(shared_src, "shared"))
 
-# Level cells — code transformed from the modules, driver appended.
+# Level cells — cute intro (personality layer, kept here) + teaching beat
+# (extracted from the codelab) + code transformed from the module, driver appended.
 LEVELS = [
     ("L0", "🐣 L0 · Your First Agent — the Pace Coach",
-     "Every marathon starts with one step. Two objects: an **`Agent`** reasons; a **`Runner`** executes it and streams events. That's the atom — everything after this is just more agents in more interesting shapes.",
+     "Every marathon starts with one step 🐾 — run the atom, then ask it your own question!",
      "L0_first_agent/agent.py", 'await ask("What is the most common mistake first-time marathoners make?")'),
     ("L1", "🔗 L1 · Your First Workflow — code meets model",
-     "A plain Python function and an LLM agent are **both just nodes** in one `edges` list. Predictable work stays a function (0 LLM); only reasoning is an agent. `START ──► fetch_conditions (0 LLM) ──► advise (1 LLM)`.",
+     "Predictable work stays a function (0 LLM); only reasoning is an agent.",
      "L1_graph_basics/workflow.py", "await main()"),
     ("L2a", "🌤️ L2a · Parallel Fan-out + JoinNode (Pillar 1a)",
-     "Gather race-day data **in parallel** (3 functions, 0 LLM), a **`JoinNode`** bundles it, and one strategy agent writes the plan. No router yet. ✨ Try `run(\"COLD\")` and watch it adapt!",
+     "Fan out, join, decide ✨ Try `run(\"COLD\")` and watch the plan flip!",
      "L2a_parallel_join/workflow.py", 'await run("HOT")'),
     ("L2b", "🚦 L2b · Add the Deterministic Router (Pillar 1b)",
-     "Now a **deterministic `if`-statement router** branches on temperature to one of three specialized agents — hot / normal / cold. **Net cost: 1 LLM call.** 🔁 Try `run(\"NORMAL\")`.",
+     "One `if`-statement instead of a model decision 💸 🔁 Try `run(\"NORMAL\")` too.",
      "L2b_router/workflow.py", 'await run("HOT")'),
-    ("L3", "🤝 L3 · Collaborative Agents — the Race Concierge (Pillar 2)",
-     "Known **team** (6 specialists 🩺🌦️⏱️🎽🥤🧠); the **question** picks who answers. The coordinator emits several delegation-tool calls in one turn; because the specialists are `mode=\"single_turn\"`, ADK runs the chosen subset **in parallel** (each in an isolated branch), then synthesizes one reply. 💡 Change the question and re-run — the contrast *is* the lesson!\n\n**The 3 collaboration modes** — this is the first level that sets `mode` at all, because earlier levels' agents are *workflow nodes*, which already default to `single_turn`. Subagents default to `chat`, so here the argument does real work. Set it on **subagents only**, never the coordinator: `chat` = free multi-turn with the user (the subagent default); `task` = asks a clarifying question, then auto-returns; `single_turn` = no user interaction, auto-returns, **runs in parallel**. This demo uses `single_turn` — the only one that runs concurrently, which is the whole point here.\n\n*Note: occasionally a specialist returns prose not JSON and you'll see a validation warning — the coordinator recovers. 🙂*",
-     "L3_collaborative/concierge.py", 'await ask("Should I race today?")'),
+    ("L3a", "🤝 L3a · Collaborative Agents: One Flag, Two Worlds (Pillar 2)",
+     "Same team, run twice — the only diff is one flag. 💰 Beat 1 ≈ 2 LLM calls · Beat 2 ≈ 4–8 (depends on the subset).",
+     "L3a_collaborative/concierge.py",
+     'await ask("What about fueling?", mode="chat")   # Beat 1 — watch it strand\n'
+     'await ask("Should I race today?")               # Beat 2 — one flag, two worlds'),
+    ("L3b", "🎽 L3b · Task Mode: a Conversation with a Finish Line (Pillar 2)",
+     "Clarify ➜ pause ➜ resume ➜ `finish_task` 🏁 (~4 LLM calls across two scripted turns).",
+     "L3b_task_desk/desk.py", 'await run_desk("I need shoes for the marathon.", "Size 9, wide.")'),
     ("L4a", "🌱 L4a · Runtime-Sized Fan-out — Deep Research (Pillar 3a)",
-     "An open-ended question is **decomposed** into N sub-questions (**width chosen at runtime**), each researched **in parallel**, then synthesized. One level deep — no recursion yet. Note `retry_config=` on the worker: a parallel worker cancels all siblings when one child fails, so without a retry a single transient error throws away the whole run.\n\n⚠️ 5-9 live LLM calls (1 decompose + 3-7 research + 1 synthesize), ~20-30s.",
+     "The LLM picks how MANY — the width is decided at runtime.",
      "L4a_flat_research/deep_research.py", "await run()"),
     ("L4b", "🌳 L4b · Add Recursive Spawning (Pillar 3b)",
-     "Now each finding can **recursively spawn** deeper questions via `ctx.run_node` (**depth chosen at runtime**), safely bounded by `MAX_DEPTH`. Recursion runs **inside the framework** — you keep tracing & checkpointing. 🌲\n\n⚠️ 5-30 live LLM calls, 20-45s — ceiling = 1 + 7 + 7×3 + 1.",
+     "…and how DEEP — bounded by `MAX_DEPTH`, in code. 🌲",
      "L4b_recursion/deep_research.py", "await run()"),
 ]
 
@@ -237,14 +271,22 @@ BOXES = {
 |  > hot / normal / cold      (1 LLM call)    |
 +---------------------------------------------+
 ```""",
- "L3": """```
+ "L3a": """```
 +-----------------------------------------------+
 |       🤝  race_concierge  (coordinator)       |
 |-----------------------------------------------|
-|  6 specialists (single_turn):                 |
-|  medical.weather.pacing.gear.nutrition.mental |
-|  reads the question > picks a subset >        |
-|  runs them in parallel > synthesizes 1 answer |
+|  6 specialists · same team, run twice:        |
+|  chat (default)  > TRANSFER > stranded 🫠     |
+|  single_turn     > parallel subset > 1 answer |
++-----------------------------------------------+
+```""",
+ "L3b": """```
++-----------------------------------------------+
+|          🎽  race_desk  (coordinator)         |
+|-----------------------------------------------|
+|  gear_fitter (mode="task", output_schema)     |
+|  ask > ⏸ paused > scripted reply > resume >   |
+|  finish_task(GearOrder) > auto-return  🏁     |
 +-----------------------------------------------+
 ```""",
  "L4a": """```
@@ -267,31 +309,11 @@ BOXES = {
 
 for cid, title, intro, modpath, driver in LEVELS:
     box = ("\n\n" + BOXES[cid]) if cid in BOXES else ""
-    cells.append(md(f"---\n## {title}\n\n{intro}{box}", f"{cid}_md"))
+    cells.append(md(f"---\n## {title}\n\n{intro}\n\n{BEATS[cid]}{box}", f"{cid}_md"))
     body = module_to_cell(read(modpath))
     cells.append(code(f"{body}\n\n{driver}", cid))
 
-cells.append(md("""---
-## 🧭 L5 · Which Pattern, When? (the finish line 🏁)
-
-**The axis — who decides what runs next?** 🚦 the graph you drew (Pillar 1) · 🤝 the LLM (Pillar 2) · 🌳 your Python code at runtime (Pillar 3).
-
-**Step 0 — do you even need a graph?** ADK ships prebuilt `SequentialAgent` / `ParallelAgent` / `LoopAgent`. For a plain chain those are the cheapest right answer. Reach past them when you need explicit routing, a join, or nodes that aren't agents (a plain function, 0 LLM calls) 👇
-
-```
-Would a prebuilt SequentialAgent / ParallelAgent / LoopAgent do?
-├─ YES ───────────────────────────────► use it; stop here ✅
-└─ NO — I need routing, a join, or non-agent nodes
-   Can you draw the workflow before the input arrives?
-   ├─ YES ────────────────────────────► Pillar 1 · graph workflow   (L2a/L2b) 🚦
-   └─ NO
-      ├─ Known team, request picks the subset? ─► Pillar 2 · collaborative (L3) 🤝
-      └─ Does the shape depend on the input?  ──► Pillar 3 · dynamic       (L4a/L4b) 🌳
-```
-
-*Not covered in this notebook:* loops (`while` generate→review→fix), human input (`RequestInput`), and demonstrated resume — plus the other two collaboration modes. All in the companion repo [adk-workflows-compared](https://github.com/cuppibla/adk-workflows-compared). 📚
-
-**Not** "2.0 can do what 1.x couldn't" — 1.x could build all of it. 2.0 gives each shape a **more direct home**, so known control flow leaves the prompt and becomes structure you can see and test. And they **compose**: a graph node can call a collaborative coordinator; a specialist can launch a dynamic workflow. 🧩
+cells.append(md("---\n## 🧭 L5 · Which Pattern, When? (the finish line 🏁)\n\n" + BEATS["L5"] + """
 
 > 🏅 *Predictable work stays functions; clear rules become explicit routing; reasoning uses the model.*
 > 🌟 *Let the LLM shape the work, but keep the boundaries in code.*
@@ -299,7 +321,7 @@ Would a prebuilt SequentialAgent / ParallelAgent / LoopAgent do?
 
 ```
   \\o/   You finished the marathon! 🏁🎉
-   |    You now know all three ADK 2 orchestration patterns.
+   |    You now know all three ADK 2 orchestration patterns — and all three modes.
   / \\   Go build something amazing — and keep the boundaries in code. 💪
 ```
 
