@@ -38,72 +38,53 @@ One app — a **Marathon Race Day Coach** — that shows all three orchestration
 <strong>Tip:</strong> <b>The mental model to hold onto:</b> <i>Predictable work stays as functions; clear rules become explicit routing; reasoning uses the model.</i> Every level is a variation on that one sentence.
 </ql-infobox>
 
+## Google Cloud setup
+
 ![[/fragments/startqwiklab]]
 
 ![[/fragments/gcpconsole]]
 
 ![[/fragments/cloudshell]]
 
+### Configure your environment
+
+This lab created a project for you when you pressed **Start Lab**, assigned a region, and enabled the Vertex AI API in the background — there is nothing to enable by hand.
+
+1. Note your assigned values:
+   - **Project ID:** <ql-variable key="project_0.project_id" placeHolder="PROJECT"></ql-variable>
+   - **Region:** <ql-variable key="project_0.default_region" placeHolder="REGION"></ql-variable>
+
+2. In Cloud Shell, configure them in your environment:
+   <ql-code-block bash templated noWrap>
+   export GOOGLE_GENAI_USE_VERTEXAI=True
+   export GOOGLE_CLOUD_PROJECT="{{{project_0.project_id | "PROJECT_ID"}}}"
+   export GOOGLE_CLOUD_LOCATION="{{{project_0.default_region | "REGION"}}}"
+   export ADK_MODEL=gemini-2.5-flash
+   gcloud config set project $GOOGLE_CLOUD_PROJECT
+   </ql-code-block>
+
 ## Task 1. Prepare your environment
 
-In this task, you clone the tutorial repository, set up a Python virtual environment, install the required libraries, and configure environment variables.
+In this task, you clone the tutorial repository, set up a Python virtual environment, and install the required libraries.
 
-### Activate Cloud Shell
-
-1. On the Google Cloud Console title bar, click **Activate Cloud Shell**.
-2. Click **Continue** if prompted.
-
-### Enable the Vertex AI API
-
-1. In Cloud Shell, run the following command to enable the Vertex AI API:
-
-<ql-code-block language="bash">
-gcloud services enable aiplatform.googleapis.com
-</ql-code-block>
-
-### Clone the tutorial repository
-
-1. In Cloud Shell, run the following command to clone the tutorial repository:
+1. In Cloud Shell, clone the tutorial repository and enter it:
 
 <ql-code-block language="bash">
 git clone https://github.com/cuppibla/adk2-tutorial.git
-</ql-code-block>
-
-2. Navigate to the repository directory:
-
-<ql-code-block language="bash">
 cd adk2-tutorial
 </ql-code-block>
 
-### Configure the environment
-
-1. Create a Python virtual environment:
+2. Create and activate a Python virtual environment:
 
 <ql-code-block language="bash">
 python3 -m venv venv
-</ql-code-block>
-
-2. Activate the virtual environment:
-
-<ql-code-block language="bash">
 source venv/bin/activate
 </ql-code-block>
 
-### Install dependencies
-
-1. Install the required Python packages:
+3. Install the required Python packages:
 
 <ql-code-block language="bash">
 pip install -q "google-adk==2.3.0" python-dotenv pydantic nest_asyncio
-</ql-code-block>
-
-2. Configure the environment variables to use Vertex AI:
-
-<ql-code-block language="bash" templated>
-export GOOGLE_GENAI_USE_VERTEXAI=True
-export ADK_MODEL=gemini-2.5-flash
-export GOOGLE_CLOUD_PROJECT={{{project_0.project_id}}}
-export GOOGLE_CLOUD_LOCATION=us-central1
 </ql-code-block>
 
 ## Task 2. Prologue · Why not one big prompt?
@@ -122,6 +103,8 @@ That's the disease, and it has four symptoms worth naming:
 4. **You pay for everything, every time** — five steps, one giant call, no caching a deterministic part.
 
 Hold that feeling. The next nine levels take those steps **out of the prompt, one at a time**: functions fetch (L1–L2a), an `if`-statement routes (L2b), specialists divide the work (L3a–L3b), and code bounds the shape (L4a–L4b).
+
+![The mega-prompt coach — confident, with nothing behind the chart](img/story-prologue.png)
 
 ### Run it
 
@@ -463,6 +446,8 @@ python -m L3b_task_desk.desk "I need a hydration vest" --reply "2 liters, medium
 
 ![L3b flow](img/diagram-l3b.png)
 
+![gear_fitter holding the task open — a paused task, not a hang](img/story-l3b-desk.png)
+
 > 🔍 **The markers:** `mode="task"` + `output_schema=` on the *same* agent — and in the output, the ⏸ pause and the `finish_task` call.
 
 **What you'll see:**
@@ -524,9 +509,9 @@ START ─► decompose ─► research_topic (parallel_worker) ─► synthesize
 
 An open-ended question is **decomposed** into N sub-questions — **N is chosen by the LLM at runtime** (3–7) — each **researched in parallel**, then **synthesized** into one briefing.
 
-<ql-infobox>
-<strong>Important:</strong> This cell makes <b>5–9 live LLM calls</b> (1 decompose + 3–7 research + 1 synthesize) and takes <b>~20–30s</b>. It costs real API quota.
-</ql-infobox>
+<ql-warningbox>
+<p><strong>Important:</strong> This cell makes <b>5–9 live LLM calls</b> (1 decompose + 3–7 research + 1 synthesize) and takes <b>~20–30s</b>. It costs real API quota.</p>
+</ql-warningbox>
 
 ### Run it
 
@@ -573,9 +558,9 @@ START ─► decompose ─► research_topic (parallel_worker, recursive) ─►
                              └────── research(q1) ─► maybe spawn children
 ```
 
-<ql-infobox>
-<strong>Important:</strong> This cell makes <b>5–30 live LLM calls</b> and takes <b>20–45s</b> — the ceiling is 1 decompose + 7 top-level + 7×3 children + 1 synthesize. Run it deliberately.
-</ql-infobox>
+<ql-warningbox>
+<p><strong>Important:</strong> This cell makes <b>5–30 live LLM calls</b> and takes <b>20–45s</b> — the ceiling is 1 decompose + 7 top-level + 7×3 children + 1 synthesize. Run it deliberately.</p>
+</ql-warningbox>
 
 ### Run it
 
@@ -650,9 +635,9 @@ Would a prebuilt SequentialAgent / ParallelAgent / LoopAgent do?
       └─ Does the shape depend on the input?  ──► Pillar 3 · Dynamic        (L4a/L4b)
 ```
 
-<ql-infobox>
-<strong>Important:</strong> <b>What this lab did not teach you.</b> Nine rungs, ~50 minutes — the scope is deliberate. <b>Loops</b> (generate → review → fix in a <code>while</code>) are the canonical dynamic shape and aren't here; neither is graph-workflow <b>human input</b> (<code>RequestInput</code> — L3b's paused <i>task</i> is the collaborative cousin, not the graph node); and L4b's <b>resumability</b> is asserted but never demonstrated. All of it is covered in the companion repo <a href="https://github.com/cuppibla/adk-workflows-compared"><b>adk-workflows-compared</b></a> — see <a href="https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/07_loop"><code>07_loop</code></a>, <a href="https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/17_request_input"><code>17_request_input</code></a>, and <a href="https://github.com/cuppibla/adk-workflows-compared/blob/main/docs/three-pillars.md"><code>docs/three-pillars.md</code></a>.
-</ql-infobox>
+<ql-warningbox>
+<p><strong>Important:</strong> <b>What this lab did not teach you.</b> Nine rungs, ~50 minutes — the scope is deliberate. <b>Loops</b> (generate → review → fix in a <code>while</code>) are the canonical dynamic shape and aren't here; neither is graph-workflow <b>human input</b> (<code>RequestInput</code> — L3b's paused <i>task</i> is the collaborative cousin, not the graph node); and L4b's <b>resumability</b> is asserted but never demonstrated. All of it is covered in the companion repo <a href="https://github.com/cuppibla/adk-workflows-compared"><b>adk-workflows-compared</b></a> — see <a href="https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/07_loop"><code>07_loop</code></a>, <a href="https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/17_request_input"><code>17_request_input</code></a>, and <a href="https://github.com/cuppibla/adk-workflows-compared/blob/main/docs/three-pillars.md"><code>docs/three-pillars.md</code></a>.</p>
+</ql-warningbox>
 
 ![L5 · which pattern](img/diagram-table.png)
 
@@ -682,6 +667,8 @@ Each pattern you just ran is a real product shape:
 The three patterns are **not mutually exclusive**. A graph node can call a collaborative coordinator; a specialist can launch a dynamic workflow. Choose the right pattern per *part* of the problem — that's how you avoid turning every agent system into one giant prompt.
 
 ## Task 12. Congratulations
+
+![Nine agents, one baton, an orderly finish](img/story-congrats.png)
 
 You built a Marathon Race Day Coach and, along the way, all three of ADK 2's orchestration patterns.
 

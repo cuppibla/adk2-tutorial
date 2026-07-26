@@ -20,6 +20,9 @@ environment:
       id: project_0
       variant: gcpd
       ssh_key_user: user_0
+      startup_script:
+        type: qwiklabs
+        path: tf
       allowed_locations:
         - us-central1
         - us-west1
@@ -43,3 +46,5 @@ environment:
       reference: user_0.password
     - label: Project ID
       reference: project_0.project_id
+    - label: Region
+      reference: project_0.default_region

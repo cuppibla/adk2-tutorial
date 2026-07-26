@@ -154,6 +154,8 @@ That's the disease, and it has four symptoms worth naming:
 Hold that feeling. The next nine levels take those steps **out of the prompt, one at a time**: functions fetch (L1–L2a), an `if`-statement routes (L2b), specialists divide the work (L3a–L3b), and code bounds the shape (L4a–L4b).
 <!-- /beat:WHY -->
 
+![The mega-prompt coach — confident, with nothing behind the chart](img/story-prologue.png)
+
 💻 **Local:** `python -m shared.prologue`
 
 ## L0 · Your first ADK 2 agent
@@ -458,6 +460,8 @@ race_desk (coordinator)
 
 ![L3b flow](img/diagram-l3b.png)
 
+![gear_fitter holding the task open — a paused task, not a hang](img/story-l3b-desk.png)
+
 <!-- beat:L3b -->
 > 🔍 **The markers:** `mode="task"` + `output_schema=` on the *same* agent — and in the output, the ⏸ pause and the `finish_task` call.
 
@@ -677,6 +681,8 @@ The three patterns are **not mutually exclusive**. A graph node can call a colla
 
 ## Congratulations
 Duration: 1
+
+![Nine agents, one baton, an orderly finish](img/story-congrats.png)
 
 You built a Marathon Race Day Coach and, along the way, all three of ADK 2's orchestration patterns.
 

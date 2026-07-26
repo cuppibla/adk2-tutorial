@@ -73,9 +73,11 @@ def asides_to_infoboxes(text: str) -> str:
         body = []
         while i < len(lines) and lines[i].startswith(">"):
             body.append(lines[i][1:].lstrip()); i += 1
-        label = "Tip" if kind == "positive" else "Important"
         html = "<br>".join(md_inline_to_html(l) for l in body if l.strip())
-        out.append(f"<ql-infobox>\n<strong>{label}:</strong> {html}\n</ql-infobox>")
+        if kind == "positive":
+            out.append(f"<ql-infobox>\n<strong>Tip:</strong> {html}\n</ql-infobox>")
+        else:
+            out.append(f"<ql-warningbox>\n<p><strong>Important:</strong> {html}</p>\n</ql-warningbox>")
     return "\n".join(out)
 
 
@@ -126,8 +128,7 @@ def transform_overview(body: str) -> str:
     body = python_fences_to_blocks(body)
     body = asides_to_infoboxes(body)
     body = body.replace("codelab", "lab").replace("Codelab", "Lab")
-    return ("## Overview\n\n" + body.strip() +
-            "\n\n![[/fragments/startqwiklab]]\n\n![[/fragments/gcpconsole]]\n\n![[/fragments/cloudshell]]\n")
+    return "## Overview\n\n" + body.strip() + "\n"
 
 
 def main() -> None:
@@ -172,6 +173,9 @@ def main() -> None:
     shutil.copy2(TPL / "QL_OWNER", OUT / "QL_OWNER")
     shutil.copy2(TPL / "README.md", OUT / "README.md")
     shutil.copy2(TPL / "elixirignore", OUT / ".elixirignore")
+    if (OUT / "tf").exists():
+        shutil.rmtree(OUT / "tf")
+    shutil.copytree(TPL / "tf", OUT / "tf")
 
     tasks = re.findall(r"^## (Task \d+\..*|Overview.*)$", en, flags=re.M)
     print(f"wrote {inst / 'en.md'} — {len(en.splitlines())} lines")
