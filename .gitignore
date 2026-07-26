@@ -10,3 +10,4 @@ codelab/adk2-orchestration/
 
 # ADK local session store (runtime artifact)
 .adk/
+codelab/adk2-orchestration/
