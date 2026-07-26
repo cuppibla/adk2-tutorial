@@ -146,12 +146,12 @@ async def research_topic(ctx, node_input):
     ), ResearchFinding)
 
     children = []
-    # The boundary in code: only spawn if the LLM asked AND we're under MAX_DEPTH.
+    # ★ the brake — YOU wrote the recursion below, so YOU write its boundary.
     if finding.needs_deeper and finding.deeper_questions and depth < MAX_DEPTH:
         deeper = [{"question": dq, "depth": depth + 1, "original_query": ctxq}
                   for dq in finding.deeper_questions]
         print(f"  [research d={depth}] spawning {len(deeper)} deeper (depth chosen at runtime)")
-        children = await ctx.run_node(research_topic, node_input=deeper)   # recursive fan-out
+        children = await ctx.run_node(research_topic, node_input=deeper)   # ★ calls ITSELF — ordinary Python recursion, no framework magic
 
     yield Event(output={"question": question, "depth": depth, "summary": finding.summary,
                         "key_facts": finding.key_facts, "children": children})

@@ -65,7 +65,7 @@ def pace_splits(target_finish: str) -> dict:
 pace_coach = Agent(
     name="pace_coach",
     model=MODEL,
-    tools=[pace_splits],
+    tools=[pace_splits],   # ★ the model MAY call this — it decides, per question
     instruction=(
         "You are a friendly, concise marathon coach. Answer the runner's question "
         "in 3-4 sentences. Be specific and practical. No preamble. If the runner "

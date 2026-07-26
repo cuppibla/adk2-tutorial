@@ -63,7 +63,12 @@ runner's training history. For any race the runner names, do ALL of the followin
 async def run(question: str = "Plan my race-day strategy for the Chicago Marathon.") -> None:
     runner = Runner(node=mega_coach, app_name="prologue",
                     session_service=InMemorySessionService(), auto_create_session=True)
-    print(f"\n🏃 You: {question}\n\n🤖 mega_coach:")
+    print(f"\n🏃 You: {question}")
+    print(
+        "\n🎯 WATCH ONE THING while it talks: every specific number below —\n"
+        "   temperature, wind, grades, YOUR weekly mileage — ask where it came from.\n"
+        "\n🤖 mega_coach:"
+    )
     async for event in runner.run_async(
         user_id="u1", session_id="s1",
         new_message=gtypes.Content(role="user", parts=[gtypes.Part(text=question)]),
@@ -72,13 +77,13 @@ async def run(question: str = "Plan my race-day strategy for the Chicago Maratho
             if getattr(part, "text", None):
                 print(part.text, end="", flush=True)
     print(
-        "\n\n⚠️  Now read it again and ask: where did the temperature come from?\n"
-        "    The hardest-mile grade? Your weekly mileage? There is no weather API\n"
-        "    here, no course data, no training log — one opaque model call either\n"
-        "    INVENTED those numbers or hedged them into uselessness. You cannot\n"
-        "    test step 4's routing, you cannot swap step 1 for a real API, and\n"
-        "    every run pays for all five steps. Hold that feeling — the next nine\n"
-        "    levels take these steps out of the prompt, one at a time.\n"
+        "\n\n⚠️  Three questions before you scroll on:\n"
+        "    1. Where did the temperature come from?   (there is no weather API here)\n"
+        "    2. Where did the course grades come from? (there is no course data here)\n"
+        "    3. Where did YOUR training log come from? (it has never seen one)\n"
+        "    One opaque model call INVENTED its own inputs — fluently. You cannot\n"
+        "    test its routing, swap in a real API, or trust a single number. The\n"
+        "    next nine levels take these steps out of the prompt, one at a time.\n"
     )
 
 

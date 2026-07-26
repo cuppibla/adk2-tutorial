@@ -81,7 +81,7 @@ async def pull_fitness(node_input):
 
 # ─── Join: bundle the three parallel results into one typed payload. ──────────
 
-join_inputs = JoinNode(name="join_inputs")
+join_inputs = JoinNode(name="join_inputs")   # ★ waits for ALL branches, bundles outputs keyed by function name
 
 
 # ─── One strategy agent (no routing yet). ─────────────────────────────────────
@@ -103,6 +103,7 @@ root = Workflow(
     name="l2a_parallel_join",
     description="Parallel data gathering + a single strategy agent.",
     edges=[
+        # ★ three edges from START — this IS the fan-out
         (START, fetch_weather, join_inputs),
         (START, analyze_course, join_inputs),
         (START, pull_fitness, join_inputs),

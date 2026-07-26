@@ -88,7 +88,7 @@ def route_by_weather(node_input):
     else:
         route = "NORMAL"
     print(f"  [router] temp={temp}°F → route={route}  (an if-statement, 0 LLM)")
-    return Event(output=node_input, route=route)
+    return Event(output=node_input, route=route)   # ★ the function NAMES the path
 
 
 # ─── Three specialized strategy agents. Only one ever runs. ───────────────────
@@ -135,6 +135,7 @@ root = Workflow(
         (START, pull_fitness, join_inputs),
         (join_inputs, route_by_weather),
         (route_by_weather, {
+            # ★ dict-edge: route name → node. Add a branch? Add a DEFAULT_ROUTE too.
             "HOT": hot_strategy,
             "NORMAL": normal_strategy,
             "COLD": cold_strategy,

@@ -79,12 +79,14 @@ SPECIALIST_NAMES = {name for name, _, _ in SPECIALIST_SPECS}
 # ─── Specialist factory. `mode` is THE variable this level teaches. ────────────
 
 def _specialist(name: str, domain: str, focus: str, mode: str | None) -> Agent:
+    # NOTE: this `if` exists ONLY so one team can be built both ways for the
+    # contrast — a real app hardcodes one mode and the branch disappears.
     kwargs = {}
     if mode == "single_turn":
         # The structured contract only makes sense when the specialist is a TOOL:
         # it receives a SpecialistInput and must return a SpecialistResponse.
         # A chat specialist talks to the user in prose — no schemas.
-        kwargs = dict(mode="single_turn",
+        kwargs = dict(mode="single_turn",   # ★ THE flag this level is about
                       input_schema=SpecialistInput, output_schema=SpecialistResponse)
     return Agent(
         name=name, model=MODEL,
