@@ -167,6 +167,8 @@ async for event in runner.run_async(user_id="u1", session_id="s1", new_message=m
 
 > aside positive
 > Everything else in this codelab is just *more agents, arranged in more interesting shapes*. This is the atom.
+
+> 👀 **Read:** just two objects — `Agent` (reasons) and `Runner` (executes + streams events). · ▶ **Run** it. · ✏️ **Change:** rewrite the `instruction` (make the coach blunt, or make it answer in one sentence) and re-run — the instruction IS the program.
 <!-- /beat:L0 -->
 
 ## L1 · Your first Workflow
@@ -202,6 +204,8 @@ l1_workflow = Workflow(edges=[(START, fetch_conditions, advise)])
 
 <!-- beat:L1 -->
 **What's new vs L0:** `Workflow(edges=[...])`, `START` (where input enters), a function node returning `Event(output=...)`, and `input_schema=Conditions` so the function's output is validated against that schema before the agent sees it (as JSON text — `input_schema` validates the boundary, it does not hand the agent a Python object).
+
+> 👀 **Read:** `fetch_conditions` returns data with **no model call**; `advise` has `input_schema=Conditions`. · ▶ **Run** it. · ✏️ **Change:** set `temp_f=30` in the function and re-run — the advice flips, and the function still cost 0 LLM calls.
 <!-- /beat:L1 -->
 
 ## L2a · Parallel fan-out + JoinNode (Pillar 1a)
@@ -234,6 +238,8 @@ START ──► pull_fitness ───┘   (bundles)
 
 > aside positive
 > **Where ADK 2 gives this a direct home:** function nodes and an agent node are peers in one `edges` list. 1.x could keep steps out of the model too — via a custom `BaseAgent` subclass — but that meant writing the orchestration plumbing yourself, so most builds wrapped each step as an agent.
+
+> 👀 **Read:** three edges fan out from `START`; `JoinNode` bundles them for one agent. · ▶ **Run** it and read the *timestamps*, not the total. · ✏️ **Change:** make one fetch sleep `3.0` — predict the new fan-out end time first, then verify.
 <!-- /beat:L2a -->
 
 ## L2b · Add the deterministic router (Pillar 1b)
@@ -279,6 +285,8 @@ def route_by_weather(node_input):                        # an if-statement, 0 LL
 > The common 1.x build wrapped each step as an agent — **4 calls** instead of this pattern's **1**. (A custom `BaseAgent` subclass could reach 1 call in 1.x as well; it just wasn't first-class, so few builds did it.)
 
 > ⚠️ **If you add a fourth branch,** give the route-dict a `DEFAULT_ROUTE` entry too. A route the dict doesn't match isn't an error — the branch simply ends, and the program exits **0 with no output**, which is a confusing dead end to debug.
+
+> 👀 **Read:** `route_by_weather` — the router is an `if`-statement, not an agent. · ▶ **Run** `run("COLD")` too. · ✏️ **Change:** add a `WINDY` branch with a fourth agent — and read the `DEFAULT_ROUTE` warning above *before* you do.
 <!-- /beat:L2b -->
 
 ## L3a · Collaborative agents: one flag, two worlds — Pillar 2
@@ -336,6 +344,8 @@ Now ADK injects **one delegation tool per specialist** — named after the subag
 > 💡 **Where ADK 2 gives this a direct home:** an LLM picks a **per-request subset** AND runs it in parallel — *declared* via `sub_agents` + `mode="single_turn"`. You could assemble the same shape in 1.x by wrapping each specialist in `AgentTool`; what changes is that it is now a declaration rather than plumbing. (`ParallelAgent` is always-all and `transfer_to_agent` is serial.)
 
 > ⚠️ Two honest caveats: (1) the model picks the subset, so it's **less deterministic** than L2's hard-coded router — the exact subset can vary run to run. (2) Occasionally you'll see an `Error validating input: ...` line for one specialist. It is almost never the specialist's *output* — `output_schema` makes Gemini enforce that server-side. It's the **input**: the coordinator has to reproduce the whole nested `SpecialistInput` verbatim for every parallel call, and sometimes it fumbles one. ADK returns the error as that tool's result, the coordinator recovers, and the synthesis still lands.
+
+> 👀 **Read:** the `_specialist` factory — the `mode` parameter is the whole level. · ▶ **Run** both beats. · ✏️ **Change:** ask *"my knee hurts at mile 18"* — **predict the subset first**, then check the DISPATCH lines.
 <!-- /beat:L3a -->
 
 ```python
@@ -409,6 +419,8 @@ Three things happened that neither L3a mode can do:
 > ⚠️ Two version notes before you build on this: (1) **`task` as a static graph node is version-dependent** — on 2.0.0b1–2.3.0 (this codelab's pin), `Workflow(...)` raises at construction; use exactly what this level does (a chat coordinator with task sub-agents) or dispatch via `ctx.run_node`. **Lifted in 2.5.0.** (2) **"Task agents must be leaf agents"** (no subagents of their own) is a documented ADK limitation — but a *contract*, not a runtime guard: neither 2.3.0 nor 2.5.0 will stop you. Don't read the absence of an error as permission.
 
 > 💡 **Go deeper:** a `task` agent embedded in a *graph workflow* (the 2.5.0+ shape), with routing that can loop the conversation back for a retry: companion repo [`22_agent_in_workflow`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/22_agent_in_workflow) · full mode guide: [`docs/agent-modes.md`](https://github.com/cuppibla/adk-workflows-compared/blob/main/docs/agent-modes.md).
+
+> 👀 **Read:** `gear_fitter` — `mode="task"` + `output_schema` is the entire contract. · ▶ **Run** it. · ✏️ **Change:** `run_desk("I need a hydration vest", "2 liters, medium")` — the clarifying question adapts, the finish line stays typed.
 <!-- /beat:L3b -->
 
 ## L4a · Runtime-sized parallel fan-out (Pillar 3a)
@@ -447,6 +459,8 @@ An open-ended question is **decomposed** into N sub-questions — **N is chosen 
 
 - **`rerun_on_resume=True` is mandatory** on any node that calls `ctx.run_node` — ADK raises a `ValueError` without it. On resume it must re-execute the dispatching node to rebuild the children it spawned, since those aren't in the static graph.
 - **`retry_config=` bounds how this FAILS.** A parallel worker cancels every sibling and re-raises the instant one child fails — so without a retry, a single transient 429 discards the whole run, including every call already paid for. The retry lands on the inner per-item node, so each branch retries independently.
+
+> 👀 **Read:** the two flags on `research_topic` — `parallel_worker` and `rerun_on_resume`. · ▶ **Run** it. · ✏️ **Change:** swap in your own open question — N changes because the *input* decided the width.
 <!-- /beat:L4a -->
 
 ## L4b · Add recursive spawning (Pillar 3b)
@@ -494,6 +508,8 @@ async def research_topic(ctx, node_input):
 > **The rule:** *let the LLM shape the work, but keep the boundaries in code.* `MAX_DEPTH = 2` means depth-2 children cannot spawn — there is no depth 3. Width is bounded too (3–7 sub-questions).
 
 > ⚠️ **Before you raise the knob:** the ceiling grows fast — `MAX_DEPTH=3` takes the worst case from ~30 calls to ~93. And at the very end of a run you may see a `cancelling N leftover tasks` log line: that's ADK tearing down its parallel task group after the result is already complete. Harmless — and depending on your logging config you may never see it.
+
+> 👀 **Read:** the guard: `if finding.needs_deeper and depth < MAX_DEPTH`. · ▶ **Run** it. · ✏️ **Change:** set `MAX_DEPTH = 1` and re-run — the tree flattens (and the run gets cheaper). The boundary is YOURS, in code.
 <!-- /beat:L4b -->
 
 ## L5 · Which pattern should you use?

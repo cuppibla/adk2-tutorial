@@ -88,6 +88,7 @@ workflow = Workflow(
 )
 
 
+# [harness]
 def _event_text(event) -> str | None:
     if getattr(event, "message", None) and getattr(event.message, "parts", None):
         chunks = [p.text for p in event.message.parts if getattr(p, "text", None)]

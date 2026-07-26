@@ -160,6 +160,7 @@ l4a_workflow = Workflow(
 )
 
 
+# [harness]
 async def run(query="Tell me everything I should know about racing the Boston Marathon."):
     print(f"=== L4a · flat research ===\n  QUERY: {query}\n")
     runner = Runner(node=l4a_workflow, app_name="l4a", session_service=InMemorySessionService(), auto_create_session=True)
