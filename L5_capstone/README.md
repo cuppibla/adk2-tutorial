@@ -9,7 +9,7 @@ That's the one question the three pillars actually answer. Everything else follo
 | Pillar | Who decides what runs next | Built in |
 |---|---|---|
 | **1 · Graph** | **the graph you drew** | L2a / L2b |
-| **2 · Collaborative** | **the LLM** | L3 |
+| **2 · Collaborative** | **the LLM** | L3a / L3b |
 | **3 · Dynamic** | **your Python code, at runtime** | L4a / L4b |
 
 ## Step 0: do you even need a graph?
@@ -36,7 +36,7 @@ Would a prebuilt SequentialAgent / ParallelAgent / LoopAgent do?
    │
    └─ NO
       │
-      ├─ Known team, request picks the subset? ─► Pillar 2 · Collaborative  (L3)
+      ├─ Known team, request picks the subset? ─► Pillar 2 · Collaborative  (L3a/L3b)
       │                                            the LLM decides
       │
       └─ Does the shape itself depend on input? ─► Pillar 3 · Dynamic       (L4a/L4b)
@@ -54,7 +54,7 @@ This is **not** "2.0 can do things 1.x couldn't" — 1.x could build all of it. 
 | Pattern | The common 1.x way | What it cost you | The ADK 2 home |
 |---|---|---|---|
 | **Graph** (L2a/L2b) | most builds wrapped each step as an `LlmAgent` (a `BaseAgent` subclass could avoid it, but you wrote the plumbing) | **4 LLM calls** in the common version, and routing hidden in a prompt | function nodes + agent nodes as peers → **1 LLM call**, `if`-statement router |
-| **Collaborative** (L3) | wrap each specialist in `AgentTool` and let the coordinator call them (`ParallelAgent` is always-all; `transfer_to_agent` is serial) | the shape worked, but as hand-assembled tool plumbing rather than a declared team | `sub_agents` + `mode="single_turn"` — the subset and its parallelism are **declared**, not assembled |
+| **Collaborative** (L3a/L3b) | wrap each specialist in `AgentTool` and let the coordinator call them (`ParallelAgent` is always-all; `transfer_to_agent` is serial) | the shape worked, but as hand-assembled tool plumbing rather than a declared team | `sub_agents` + `mode="single_turn"` — the subset and its parallelism are **declared**, not assembled |
 | **Dynamic** (L4a/L4b) | `ParallelAgent` (fixed list), `LoopAgent` (serial), or raw `asyncio` | recursion was buildable, but it dropped you out of the framework (lose tracing/checkpointing) | `parallel_worker` + recursive `ctx.run_node`, all inside the framework |
 
 ## They compose
@@ -73,16 +73,16 @@ The three patterns are **not mutually exclusive**. A graph node can call a colla
 
 ## What this lab did NOT teach you
 
-Eight rungs, one app, ~30 minutes — so the scope is deliberate. Three things you'll meet in real ADK 2 work that aren't here:
+Nine rungs, one app, ~40 minutes — so the scope is deliberate. Three things you'll meet in real ADK 2 work that aren't here:
 
 - **Loops.** The lab does runtime *width* (L4a) and *depth* (L4b), but never iteration. The canonical dynamic-workflow shape is generate → review → fix in a `while` loop, and it's arguably the one you'll build most. → [`07_loop`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/07_loop), [`08_loop_self`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/08_loop_self)
-- **Human input.** Pausing a workflow for approval via `RequestInput` — nothing here does it. → [`17_request_input`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/17_request_input)
+- **Graph-workflow human input.** Pausing a *graph* for approval via `RequestInput` — L3b's paused `task` is the collaborative cousin, not the graph node. → [`17_request_input`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/17_request_input)
 - **Resumability, actually demonstrated.** L4b *tells* you recursion stays inside the framework so you keep tracing and checkpointing — true, but you never see it interrupt and resume. Take that one on faith here, and go watch it work elsewhere.
 
-Also: only one of the three collaboration modes (`single_turn`) runs in this lab — see [L3](../L3_collaborative/).
+All **three collaboration modes now run in this lab**: [L3a](../L3a_collaborative/) runs `chat` (and watches it strand) then `single_turn`; [L3b](../L3b_task_desk/) runs `task` with a genuine pause/resume and `finish_task`.
 
 All of the above live in the companion repo, [**adk-workflows-compared**](https://github.com/cuppibla/adk-workflows-compared): 23 official ADK 2 samples, each with a 1.x port and when-to-use guidance.
 
 ## Where to go next
-- Re-run any level with a different scenario (`MARATHON_SCENARIO=COLD python -m L2b_router.workflow`) or a different question (`python -m L3_collaborative.concierge "what about fueling?"`) and watch the shape change.
-- Try porting your OWN problem: which parts are known-structure (L2a/L2b), which are known-team (L3), which are unknown-shape (L4a/L4b)?
+- Re-run any level with a different scenario (`MARATHON_SCENARIO=COLD python -m L2b_router.workflow`) or a different question (`python -m L3a_collaborative.concierge "what about fueling?"`), a chat-mode strand (`--mode chat`), a different task intake (`python -m L3b_task_desk.desk "I need a hydration vest" --reply "2 liters, medium"`), and watch the shape change.
+- Try porting your OWN problem: which parts are known-structure (L2a/L2b), which are known-team (L3a/L3b), which are unknown-shape (L4a/L4b)?

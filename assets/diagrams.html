@@ -115,7 +115,7 @@ th{font-family:'Fredoka';font-size:18px;background:#F6ECDA}
 tr:last-child td{border-bottom:none}
 td .q{font-family:'Space Mono',monospace;font-weight:700}
 .tag{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:#fff;padding:4px 12px;border-radius:999px;white-space:nowrap}
-.tag.blue{background:var(--blue-b)} .tag.sage{background:var(--sage-b)} .tag.honey{background:var(--honey-b)}
+.tag.blue{background:var(--blue-b)} .tag.sage{background:var(--sage-b)} .tag.honey{background:var(--honey-b)} .tag.ink{background:var(--ink,#3a3a3a)}
 
 .legend{position:absolute;bottom:26px;left:64px;display:flex;gap:18px;font-size:13px;color:var(--muted);font-weight:700;z-index:3}
 .legend b{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
@@ -151,10 +151,12 @@ td .q{font-family:'Space Mono',monospace;font-weight:700}
       <div class="lane c">
         <div class="lane-lab">Pillar 2<br>Collaborative</div>
         <div class="stops">
-          <div class="stop"><div class="dot">L3</div><div class="lab">Concierge</div></div>
+          <div class="stop"><div class="dot">L3a</div><div class="lab">Concierge</div></div>
+          <div class="connector"></div>
+          <div class="stop"><div class="dot">L3b</div><div class="lab">Task Desk</div></div>
         </div>
         <div class="spec">
-          <div class="cap">one coordinator · the request picks the subset</div>
+          <div class="cap">one coordinator · the request picks the subset · 3 modes, all run</div>
           <div class="chips">
             <span class="chip">🩺 medical</span><span class="chip">🌦️ weather</span><span class="chip">⏱️ pacing</span>
             <span class="chip">🎽 gear</span><span class="chip">🥤 nutrition</span><span class="chip">🧠 mental</span>
@@ -275,11 +277,11 @@ td .q{font-family:'Space Mono',monospace;font-weight:700}
   </div></div>
 </section>
 
-<!-- ============ L3 ============ -->
-<section class="slide" id="l3">
+<!-- ============ L3a ============ -->
+<section class="slide" id="l3a">
   <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
   <div class="head"><img class="bug" src="./felt/mascot-think.png" alt="">
-    <div><div class="eyebrow">L3 · Pillar 2 · Collaborative</div><h1>The Race Concierge</h1><p class="sub">coordinator picks a dynamic subset, runs it in parallel</p></div></div>
+    <div><div class="eyebrow">L3a · Pillar 2 · Collaborative</div><h1>One Flag, Two Worlds</h1><p class="sub">chat (default) strands the run · single_turn runs the chosen subset in parallel</p></div></div>
   <div class="body"><div class="row">
     <div class="node coral"><div class="t">race_concierge</div><div class="k">coordinator · reads the question</div></div>
     <div class="arrow">⇉</div>
@@ -297,7 +299,28 @@ td .q{font-family:'Space Mono',monospace;font-weight:700}
     <div class="arrow">→</div>
     <div class="node honey"><div class="t">synthesize</div><div class="k">one answer</div></div>
   </div></div>
-  <div class="note">"What about fueling?" → nutrition only &nbsp;·&nbsp; "Should I race today?" → medical + weather + pacing</div>
+  <div class="note">no mode= → transfer_to_agent → stranded, no synthesis &nbsp;·&nbsp; mode="single_turn" → parallel subset → one synthesized answer</div>
+</section>
+
+<!-- ============ L3b ============ -->
+<section class="slide" id="l3b">
+  <div class="brand"><img src="./felt/adk-logo.png" alt="ADK"><span>ADK <b>2</b></span></div>
+  <div class="head"><img class="bug" src="./felt/mascot-point.png" alt="">
+    <div><div class="eyebrow">L3b · Pillar 2 · Collaborative</div><h1>Task Mode: a Conversation with a Finish Line</h1><p class="sub">clarify → pause → resume → finish_task → validated return</p></div></div>
+  <div class="body"><div class="row">
+    <div class="node ink"><div class="t">"I need shoes"</div><div class="k">turn 1</div></div>
+    <div class="arrow">→</div>
+    <div class="node coral"><div class="t">race_desk</div><div class="k">delegates</div></div>
+    <div class="arrow">→</div>
+    <div class="stack"><div class="cap">gear_fitter · mode="task"</div>
+      <div class="node sage sm"><div class="t">"What size?"</div><div class="k">⏸ run ends — paused task</div></div>
+      <div class="node sage sm"><div class="t">"Size 9, wide."</div><div class="k">turn 2 resumes it</div></div>
+      <div class="node sage sm"><div class="t">finish_task</div><div class="k">validates GearOrder</div></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node honey"><div class="t">race_desk confirms</div><div class="k">auto-return</div></div>
+  </div></div>
+  <div class="note">chat = talk indefinitely · task = talk until the fields are collected · single_turn = never talk</div>
 </section>
 
 <!-- ============ L4a ============ -->
@@ -353,8 +376,9 @@ td .q{font-family:'Space Mono',monospace;font-weight:700}
     <div><div class="eyebrow">L5 · the finish line</div><h1>Which Pattern Should You Use?</h1><p class="sub">match the pattern to the shape of your problem</p></div></div>
   <div class="body"><table>
     <tr><th>Ask yourself…</th><th>Then use…</th><th>Levels</th></tr>
+    <tr><td><span class="q">Would a prebuilt Sequential / Parallel / Loop agent do?</span></td><td><span class="tag ink">Step 0 · use it — no graph needed</span></td><td>—</td></tr>
     <tr><td><span class="q">Can you draw the flow before the input arrives?</span></td><td><span class="tag blue">Pillar 1 · Graph workflow</span></td><td>L2a · L2b</td></tr>
-    <tr><td><span class="q">Known team, but the request picks the subset?</span></td><td><span class="tag sage">Pillar 2 · Collaborative</span></td><td>L3</td></tr>
+    <tr><td><span class="q">Known team, but the request picks the subset?</span></td><td><span class="tag sage">Pillar 2 · Collaborative</span></td><td>L3a · L3b</td></tr>
     <tr><td><span class="q">Does the shape itself depend on the input?</span></td><td><span class="tag honey">Pillar 3 · Dynamic</span></td><td>L4a · L4b</td></tr>
   </table></div>
   <div class="note">Not "2.0 can do what 1.x couldn't" — 2.0 gives each shape a more direct home. And they compose.</div>
