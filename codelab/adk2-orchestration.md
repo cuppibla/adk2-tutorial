@@ -37,7 +37,7 @@ One app — a **Marathon Race Day Coach** — that shows all three orchestration
 
 - A Google account (for Colab) — **no local setup required**.
 - A free **Google AI Studio** API key: [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
-- ~30 minutes.
+- ~50 minutes (the two L4 levels are the long ones — budget them).
 
 > aside positive
 > **The mental model to hold onto:** *Predictable work stays as functions; clear rules become explicit routing; reasoning uses the model.* Every level is a variation on that one sentence.
@@ -132,20 +132,44 @@ Run the **Shared building blocks** cell once. It defines the Pydantic schemas + 
 > aside positive
 > **Structured I/O** is how ADK 2 moves typed data between function nodes and agents. An agent with `output_schema=RaceStrategy` is *forced* to emit valid JSON for that model, and the next node receives it **validated** — no parsing glue. It arrives as a plain **dict** (JSON text for an agent node), so you index it (`node_input["fetch_weather"]["temp_f"]`) rather than reaching for attributes.
 
-You're set up! 🎽 On to **L0**.
+You're set up! 🎽 One quick detour before **L0** — the version everyone builds first.
+
+## Prologue · Why not one big prompt?
+Duration: 3
+
+<!-- beat:WHY -->
+Before the ladder, run the thing the ladder replaces: **one agent whose prompt promises everything** — fetch the weather, analyze the course, read the training log, route by conditions, output the plan.
+
+**What you'll see:** a confident, specific, well-formatted strategy… whose numbers are **invented**. In one live run it opened with *"I have pulled today's weather metrics"* and reported 52°F, a 9 mph wind, and an analysis of a training log it has never seen. There is no weather API here, no course data, no log — one opaque model call either fabricates its inputs or hedges them into uselessness.
+
+That's the disease, and it has four symptoms worth naming:
+
+1. **You can't trust it** — the data is made up, fluently.
+2. **You can't test it** — step 4's routing lives inside prose; there's no `if` to unit-test.
+3. **You can't swap a step** — no seam where a real weather API could plug in.
+4. **You pay for everything, every time** — five steps, one giant call, no caching a deterministic part.
+
+Hold that feeling. The next nine levels take those steps **out of the prompt, one at a time**: functions fetch (L1–L2a), an `if`-statement routes (L2b), specialists divide the work (L3a–L3b), and code bounds the shape (L4a–L4b).
+<!-- /beat:WHY -->
+
+💻 **Local:** `python -m shared.prologue`
 
 ## L0 · Your first ADK 2 agent
-Duration: 3
+
+Duration: 4
 
 ![Roadmap — you are here: L0](img/roadmap-L0.png)
 
 <!-- beat:L0 -->
-**The question:** can you get a model to answer, with the minimum ADK moving parts?
+**The question:** can you get a model to answer — and to reach for **real code** when arithmetic matters?
 
 **The one idea — two objects:**
 
 - **`Agent`** — the thing that reasons (a Gemini model + an instruction).
 - **`Runner`** — the thing that executes an agent inside a session and streams events.
+- **a tool** — a plain Python function (`pace_splits`) the **model decides** to call. ADK reads the signature + docstring and hands the model a declaration; no schema-writing.
+
+After the prologue this is the first repair: an LLM doing pace arithmetic in its head will happily be wrong — `pace_splits` is deterministic Python, so the numbers in the answer are **computed, not improvised**.
 <!-- /beat:L0 -->
 
 ▶ **Colab:** run the [`L0` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L0) · 📁 **GitHub:** [`L0_first_agent/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L0_first_agent) · 💻 **Local:** `python -m L0_first_agent.agent`
@@ -153,9 +177,15 @@ Duration: 3
 ![L0 flow](img/diagram-l0.png)
 
 ```python
+def pace_splits(target_finish: str) -> dict:
+    """Convert a goal time like '3:30:00' into exact per-mile / per-km paces."""
+    ...                                  # deterministic Python — no LLM
+
 pace_coach = Agent(
     name="pace_coach", model=MODEL,
-    instruction="You are a friendly, concise marathon coach. Answer in 3-4 sentences.",
+    tools=[pace_splits],                 # the model may call it; ADK reads the signature
+    instruction="You are a friendly, concise marathon coach. ... If the runner "
+                "mentions a goal time, call pace_splits — never do arithmetic yourself.",
 )
 runner = Runner(node=pace_coach, session_service=InMemorySessionService(), auto_create_session=True)
 async for event in runner.run_async(user_id="u1", session_id="s1", new_message=msg):
@@ -163,12 +193,20 @@ async for event in runner.run_async(user_id="u1", session_id="s1", new_message=m
 ```
 
 <!-- beat:L0 -->
-**What you'll see:** the coach answers your question in a few sentences. That's the whole program — one `Agent`, one `Runner`, one `run_async` loop.
+**What you'll see:**
+
+```
+   🔧 model called tool → pace_splits({'target_finish': '3:30:00'})
+   🔧 tool returned     → {'per_mile': '8:00', 'per_km': '4:58', ...}
+🧠 Coach: To finish in 3:30:00, you need an average pace of 8:00 per mile…
+```
+
+The 🔧 lines are the lesson: mid-answer, the **model chose** to call your function, and the exact `8:00/mile` in its reply came from your code — not from token statistics.
 
 > aside positive
 > Everything else in this codelab is just *more agents, arranged in more interesting shapes*. This is the atom.
 
-> 👀 **Read:** just two objects — `Agent` (reasons) and `Runner` (executes + streams events). · ▶ **Run** it. · ✏️ **Change:** rewrite the `instruction` (make the coach blunt, or make it answer in one sentence) and re-run — the instruction IS the program.
+> 👀 **Read:** `pace_splits` (a plain function) and the `tools=[pace_splits]` line. · ▶ **Run** it. · ✏️ **Change:** ask the *general* question (no goal time) — notice the 🔧 lines disappear: **the model decides** when a tool is worth calling. Then rewrite the `instruction` and re-run — the instruction is the rest of the program.
 <!-- /beat:L0 -->
 
 ## L1 · Your first Workflow
@@ -199,7 +237,7 @@ def fetch_conditions(node_input):                # function node — 0 LLM
 advise = Agent(name="advise", model=MODEL, mode="single_turn",
                input_schema=Conditions, instruction="...give pacing + gear advice...")
 
-l1_workflow = Workflow(edges=[(START, fetch_conditions, advise)])
+workflow = Workflow(edges=[(START, fetch_conditions, advise)])
 ```
 
 <!-- beat:L1 -->
@@ -238,6 +276,8 @@ START ──► pull_fitness ───┘   (bundles)
 
 > aside positive
 > **Where ADK 2 gives this a direct home:** function nodes and an agent node are peers in one `edges` list. 1.x could keep steps out of the model too — via a custom `BaseAgent` subclass — but that meant writing the orchestration plumbing yourself, so most builds wrapped each step as an agent.
+
+> 💡 **Prologue callback:** the mega-prompt *invented* its weather. Here the temperature comes out of a fetch **function** — real code, real seam. Swap the canned dict for an actual weather API and nothing else changes.
 
 > 👀 **Read:** three edges fan out from `START`; `JoinNode` bundles them for one agent. · ▶ **Run** it and read the *timestamps*, not the total. · ✏️ **Change:** make one fetch sleep `3.0` — predict the new fan-out end time first, then verify.
 <!-- /beat:L2a -->
@@ -429,6 +469,8 @@ Duration: 5
 ![Roadmap — you are here: L4a](img/roadmap-L4a.png)
 
 <!-- beat:L4a -->
+> ⚠️ **Heads-up: this is the steepest step of the ladder.** The previous level was 44 lines; this one is ~120 — three agents and two workflow nodes, and none of it is padding. Budget ~15 minutes, and lean on the Read/Run/Change line at the end: you don't need to absorb every line on the first pass.
+
 **The question:** the *shape* of the work depends on the input. You can't draw the graph ahead of time. Start with runtime **width**: let the LLM decide *how many* sub-questions.
 
 **The shape (one level deep):**
@@ -549,7 +591,7 @@ Would a prebuilt SequentialAgent / ParallelAgent / LoopAgent do?
 ```
 
 > aside negative
-> **What this codelab did not teach you.** Nine rungs, ~40 minutes — the scope is deliberate. **Loops** (generate → review → fix in a `while`) are the canonical dynamic shape and aren't here; neither is graph-workflow **human input** (`RequestInput` — L3b's paused *task* is the collaborative cousin, not the graph node); and L4b's **resumability** is asserted but never demonstrated. All of it is covered in the companion repo [**adk-workflows-compared**](https://github.com/cuppibla/adk-workflows-compared) — see [`07_loop`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/07_loop), [`17_request_input`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/17_request_input), and [`docs/three-pillars.md`](https://github.com/cuppibla/adk-workflows-compared/blob/main/docs/three-pillars.md).
+> **What this codelab did not teach you.** Nine rungs, ~50 minutes — the scope is deliberate. **Loops** (generate → review → fix in a `while`) are the canonical dynamic shape and aren't here; neither is graph-workflow **human input** (`RequestInput` — L3b's paused *task* is the collaborative cousin, not the graph node); and L4b's **resumability** is asserted but never demonstrated. All of it is covered in the companion repo [**adk-workflows-compared**](https://github.com/cuppibla/adk-workflows-compared) — see [`07_loop`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/07_loop), [`17_request_input`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/17_request_input), and [`docs/three-pillars.md`](https://github.com/cuppibla/adk-workflows-compared/blob/main/docs/three-pillars.md).
 <!-- /beat:L5 -->
 
 ![L5 · which pattern](img/diagram-table.png)
@@ -565,6 +607,17 @@ This is **not** "2.0 can do things 1.x couldn't" — 1.x could build all of it. 
 | **Collaborative** | buildable via `AgentTool` plumbing; `ParallelAgent` always-all, `transfer_to_agent` serial | a **declared** team: `sub_agents` + `mode="single_turn"` |
 | **Dynamic** | recursion drops you out of the framework | `parallel_worker` + recursive `ctx.run_node` inside the framework |
 
+### What you can build now
+
+Each pattern you just ran is a real product shape:
+
+| You practiced | In the wild, that's | Start from |
+| --- | --- | --- |
+| Graph + router (L2a/L2b) | document pipelines, ETL-with-LLM-steps, review/approval chains, eval harnesses | this repo's L2b |
+| Coordinator + `single_turn` team (L3a) | a support copilot with specialist teams, triage desks, multi-lens review | [marathon demo](https://github.com/cuppibla/adk-2-marathon-demo) mode 2 |
+| `task` agents (L3b) | intake forms, booking flows, onboarding, KYC — any "collect then act" | [`22_agent_in_workflow`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/22_agent_in_workflow) |
+| Dynamic width/depth (L4a/L4b) | research agents, report generators, audit sweeps over unknown-sized inputs | [marathon demo](https://github.com/cuppibla/adk-2-marathon-demo) mode 3 |
+
 ### They compose
 
 The three patterns are **not mutually exclusive**. A graph node can call a collaborative coordinator; a specialist can launch a dynamic workflow. Choose the right pattern per *part* of the problem — that's how you avoid turning every agent system into one giant prompt.
@@ -577,7 +630,8 @@ You built a Marathon Race Day Coach and, along the way, all three of ADK 2's orc
 
 ### What you learned
 
-- **L0–L1** — `Agent`, `Runner`, and your first `Workflow` (function nodes + agent nodes as peers).
+- **Prologue** — the mega-prompt that *invented its own weather*: why structure exists at all.
+- **L0–L1** — `Agent`, `Runner`, a real **tool** the model chooses to call, and your first `Workflow` (function nodes + agent nodes as peers).
 - **L2a / L2b** — graph workflows: parallel fan-out + `JoinNode`, then deterministic routing — one LLM call.
 - **L3a** — collaborative agents: the same team run in `chat` (stranded) then `single_turn` (parallel subset + synthesis) — one flag, two worlds.
 - **L3b** — `task` mode: a paused clarifying question, a scripted resume, `finish_task` returning a validated object.

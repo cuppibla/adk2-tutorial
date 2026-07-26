@@ -106,6 +106,23 @@ def extract_beats(text):
 BEATS = extract_beats(read("codelab/adk2-orchestration.md"))
 
 
+def check_excerpt_drift():
+    """Every def/Agent/Workflow name shown in a codelab python excerpt must
+    exist in the real modules — this is what caught the l1_workflow ghost."""
+    cl = read("codelab/adk2-orchestration.md")
+    src = "\n".join(p.read_text() for p in ROOT.glob("L*/*.py")) + \
+          "\n".join(p.read_text() for p in ROOT.glob("shared/*.py"))
+    ids = set()
+    for block in re.findall(r"```python\n(.*?)```", cl, re.S):
+        ids |= set(re.findall(r"^\s*(?:async )?def (\w+)", block, re.M))
+        ids |= set(re.findall(r"^(\w+)\s*=\s*(?:Agent|Workflow|LlmAgent)\(", block, re.M))
+    ghosts = sorted(i for i in ids if i not in src)
+    assert not ghosts, f"codelab excerpts reference identifiers missing from modules: {ghosts}"
+
+
+check_excerpt_drift()
+
+
 # ─── Cells ────────────────────────────────────────────────────────────────────
 
 md = lambda src, cid: {"cell_type": "markdown", "metadata": {"id": cid}, "source": src}
@@ -126,7 +143,8 @@ By the end of this adventure, you'll be able to:
 
 | Level | Idea |
 |---|---|
-| **L0** 🐣 | `Agent` + `Runner` — the atom |
+| **P** 🎯 | Prologue — run the mega-prompt, watch it *invent* its data |
+| **L0** 🐣 | `Agent` + `Runner` + a real **tool** — the atom |
 | **L1** 🔗 | first `Workflow`: a function node and an agent node are peers |
 | **L2a** 🌤️ | **Pillar 1a** — parallel fetch + `JoinNode` (one agent) |
 | **L2b** 🚦 | **Pillar 1b** — add the deterministic router → 1 of 3 agents |
@@ -204,12 +222,18 @@ cells.append(md("""---
 Structured I/O is how ADK 2 moves typed data between function nodes and agents — like passing a clean baton 🏃‍♀️➡️🏃. These Pydantic schemas + canned marathon scenarios are reused from L2 onward. **Run this cell once**, then keep going.""", "shared_md"))
 cells.append(code(shared_src, "shared"))
 
+# Prologue — the mega-prompt failure, run before the ladder.
+cells.append(md("---\n## 🎯 Prologue · Why Not One Big Prompt?\n\n" + BEATS["WHY"], "why_md"))
+cells.append(code(module_to_cell(read("shared/prologue.py")) + "\n\nawait run()", "why"))
+
 # Level cells — cute intro (personality layer, kept here) + teaching beat
 # (extracted from the codelab) + code transformed from the module, driver appended.
 LEVELS = [
     ("L0", "🐣 L0 · Your First Agent — the Pace Coach",
-     "Every marathon starts with one step 🐾 — run the atom, then ask it your own question!",
-     "L0_first_agent/agent.py", 'await ask("What is the most common mistake first-time marathoners make?")'),
+     "Every marathon starts with one step 🐾 — a model, an instruction, and one REAL tool.",
+     "L0_first_agent/agent.py",
+     'await ask("I want to finish in 3:30:00 — what pace do I need?")   # watch the 🔧 tool call\n'
+     'await ask("What is the most common mistake first-time marathoners make?")  # no numbers → the model skips the tool'),
     ("L1", "🔗 L1 · Your First Workflow — code meets model",
      "Predictable work stays a function (0 LLM); only reasoning is an agent.",
      "L1_graph_basics/workflow.py", "await main()"),

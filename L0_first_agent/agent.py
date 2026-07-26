@@ -1,11 +1,16 @@
-"""L0 · Your first ADK 2 agent.
+"""L0 · Your first ADK 2 agent — a model, an instruction, and one real tool.
 
-The smallest possible ADK 2 program: ONE agent, ONE Runner, ONE question.
-No workflows, no schemas, no sub-agents yet — just prove the setup works and
-you can get a model to answer.
+The smallest complete ADK 2 program: ONE agent, ONE tool, ONE Runner.
+No workflows, no schemas, no sub-agents yet.
 
-    Agent  → the thing that reasons (wraps a Gemini model + an instruction)
+    Agent  → the thing that reasons (a Gemini model + an instruction)
+    tool   → a plain Python function the MODEL decides to call when it needs it
     Runner → the thing that executes an agent inside a session and streams events
+
+The tool matters: an LLM doing pace arithmetic in its head will happily be
+wrong. `pace_splits` is deterministic Python — when the runner names a goal
+time, the model calls it and gets EXACT numbers. Watch the 🔧 line in the
+output: that is the model deciding, mid-answer, to use your code.
 
 Run it:
     python -m L0_first_agent.agent
@@ -39,13 +44,33 @@ if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
 
 MODEL = "gemini-flash-latest"
 
-# 1) Define an agent — a model plus a role. That's it.
+
+# 1) A tool is just a Python function with a docstring and type hints —
+#    ADK reads the signature and hands the model a declaration for it.
+def pace_splits(target_finish: str) -> dict:
+    """Convert a marathon goal time like '3:30:00' (or '3:30') into exact
+    per-mile and per-km paces. Use this instead of estimating arithmetic."""
+    parts = target_finish.strip().split(":")
+    h, m, s = ([0, 0, 0] + [int(x) for x in parts])[-3:]
+    total = h * 3600 + m * 60 + s
+    fmt = lambda sec: f"{int(sec // 60)}:{int(sec % 60):02d}"
+    return {
+        "per_mile": fmt(total / 26.2188),
+        "per_km": fmt(total / 42.195),
+        "goal": f"{h}:{m:02d}:{s:02d}",
+    }
+
+
+# 2) Define an agent — a model, a role, and the tools it may use.
 pace_coach = Agent(
     name="pace_coach",
     model=MODEL,
+    tools=[pace_splits],
     instruction=(
         "You are a friendly, concise marathon coach. Answer the runner's question "
-        "in 3-4 sentences. Be specific and practical. No preamble."
+        "in 3-4 sentences. Be specific and practical. No preamble. If the runner "
+        "mentions a goal time, call pace_splits for exact paces — never do the "
+        "arithmetic yourself."
     ),
 )
 
@@ -79,6 +104,13 @@ async def ask(question: str) -> None:
         session_id="session_1",
         new_message=message,
     ):
+        for part in (getattr(getattr(event, "message", None), "parts", None) or []):
+            fc = getattr(part, "function_call", None)
+            if fc:
+                print(f"\n   🔧 model called tool → {fc.name}({dict(fc.args) if fc.args else ''})")
+            fr = getattr(part, "function_response", None)
+            if fr:
+                print(f"   🔧 tool returned     → {fr.response}\n🧠 Coach: ", end="", flush=True)
         text = _event_text(event)
         if text:
             print(text, end="", flush=True)
@@ -86,7 +118,7 @@ async def ask(question: str) -> None:
 
 
 def main() -> None:
-    question = " ".join(sys.argv[1:]) or "I'm running my first marathon in 6 weeks. What's the single most important thing to get right?"
+    question = " ".join(sys.argv[1:]) or "I want to finish in 3:30:00 — what pace do I need, and how should I run the first 5k?"
     asyncio.run(ask(question))
 
 
