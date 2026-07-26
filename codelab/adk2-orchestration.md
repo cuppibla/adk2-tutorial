@@ -163,7 +163,7 @@ Duration: 4
 <!-- beat:L0 -->
 **The question:** can you get a model to answer — and to reach for **real code** when arithmetic matters?
 
-**The one idea — two objects:**
+**The one idea — three parts:**
 
 - **`Agent`** — the thing that reasons (a Gemini model + an instruction).
 - **`Runner`** — the thing that executes an agent inside a session and streams events.
