@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Qwiklabs draft preview — adk2001</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  body{font-family:'Google Sans',Roboto,system-ui,sans-serif;max-width:840px;margin:2rem auto;padding:0 1.5rem;color:#202124;line-height:1.6}
+  h1{border-bottom:3px solid #1a73e8;padding-bottom:.4rem} h2{color:#1a73e8;margin-top:2.2rem;border-bottom:1px solid #e8eaed;padding-bottom:.3rem}
+  img{max-width:100%;border:1px solid #e8eaed;border-radius:8px}
+  code{background:#f1f3f4;padding:.1em .35em;border-radius:4px;font-size:.9em}
+  pre{background:#202124;color:#e8eaed;padding:1rem;border-radius:8px;overflow-x:auto} pre code{background:none;color:inherit}
+  blockquote{border-left:4px solid #dadce0;margin:1em 0;padding:.3em 1em;color:#3c4043;background:#f8f9fa}
+  ql-infobox{display:block;background:#e8f0fe;border-left:4px solid #1a73e8;padding:.8em 1em;border-radius:0 8px 8px 0;margin:1em 0}
+  ql-code-block{display:block;background:#202124;color:#8ab4f8;font-family:monospace;white-space:pre;padding:1rem;border-radius:8px;margin:1em 0;overflow-x:auto}
+  .frag{background:#fef7e0;border:1px dashed #f9ab00;border-radius:8px;padding:.4em 1em;color:#b06000;font-family:monospace}
+  .banner{position:sticky;top:0;background:#fce8e6;border:1px solid #d93025;border-radius:8px;padding:.5em 1em;color:#a50e0e;font-weight:600}
+</style>
+</head>
+<body>
+<div class="banner">⚠️ 本地近似预览 — 非 Qwiklabs 官方渲染器。fragments 显示为黄色占位;emoji/infobox 的最终效果以平台预览为准。</div>
+<div id="root">loading…</div>
+<script>
+fetch('./adk2001-adk2-orchestration/instructions/en.md')
+  .then(r => r.text())
+  .then(md => {
+    md = md.replace(/!\[\[(\/fragments\/[a-z]+)\]\]/g, '<div class="frag">platform fragment: $1</div>');
+    md = md.replace(/\]\(img\//g, '](adk2001-adk2-orchestration/instructions/img/');
+    marked.use({ mangle:false, headerIds:false });
+    document.getElementById('root').innerHTML = marked.parse(md);
+  });
+</script>
+</body>
+</html>

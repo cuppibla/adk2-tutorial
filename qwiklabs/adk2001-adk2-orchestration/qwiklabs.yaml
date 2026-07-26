@@ -1,0 +1,45 @@
+entity_type: Lab
+schema_version: 2
+default_locale: en
+title: "Build with ADK 2 Orchestration Patterns"
+description: "Build a Marathon Race Day Coach and learn ADK 2's three orchestration patterns — graph workflows, collaborative agents (all three collaboration modes, run live), and dynamic workflows — one runnable level at a time."
+duration: 55
+max_duration: 75
+credits: 0
+level: advanced
+tags:
+  - adk2
+  - orchestration
+  - gemini
+domain_tags:
+  - portfolio_application_development
+resources:
+environment:
+  resources:
+    - type: gcp_project
+      id: project_0
+      variant: gcpd
+      ssh_key_user: user_0
+      allowed_locations:
+        - us-central1
+        - us-west1
+        - us-west4
+        - us-east1
+        - us-east4
+        - europe-west1
+        - europe-west4
+    - type: gcp_user
+      id: user_0
+      permissions:
+        - project: project_0
+          roles:
+            - roles/editor
+  student_visible_outputs:
+    - label: Open Google Cloud console
+      reference: project_0.console_url
+    - label: Username
+      reference: user_0.username
+    - label: Password
+      reference: user_0.password
+    - label: Project ID
+      reference: project_0.project_id

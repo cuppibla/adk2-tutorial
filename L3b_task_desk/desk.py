@@ -50,16 +50,18 @@ load_dotenv()
 # [local-only]
 # Fail fast with one readable line. Without this, a missing key surfaces ~290
 # lines of ADK/asyncio traceback with the real cause on the very last line.
-if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
+_vertex = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "").lower() in ("true", "1", "yes")
+if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or _vertex):
     sys.exit(
         "✗ No API key found.\n"
         "  cp .env.example .env  then add GOOGLE_API_KEY=...\n"
-        "  Get a free key at https://aistudio.google.com/apikey"
+        "  Get a free key at https://aistudio.google.com/apikey\n"
+        "  (On GCP: export GOOGLE_GENAI_USE_VERTEXAI=True + GOOGLE_CLOUD_PROJECT instead.)"
     )
 # [/local-only]
 
 
-MODEL = "gemini-flash-latest"
+MODEL = os.getenv("ADK_MODEL", "gemini-flash-latest")   # AI Studio alias; on Vertex set ADK_MODEL=gemini-2.5-flash
 
 
 class GearOrder(BaseModel):
