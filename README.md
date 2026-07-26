@@ -6,7 +6,7 @@
 
 <!-- Loads notebooks/ straight from this repo, so it is always current. No manual Drive re-upload. -->
 
-There are three ways to take this tutorial. **All cover the same eight levels.**
+There are three ways to take this tutorial. **All cover the same nine levels.**
 - **📖 Codelab (guided)** — a step-by-step walkthrough that wraps the Colab: [`codelab/adk2-orchestration.md`](codelab/). Best for following along start to finish.
 - **▶ Colab (zero setup)** — click the badge, add your API key, run cells top to bottom. Best for "just show me it running."
 - **💻 Local (GitHub)** — clone, `./setup_venv.sh`, run each level as a module. Best for editing and keeping the code.
@@ -27,7 +27,8 @@ Every level answers one question, adds one idea, and stays runnable on its own. 
 | **[L1](L1_graph_basics/)** · First workflow | How do code and an LLM share one flow? | `Workflow(edges=...)`; function node + agent node are peers | `python -m L1_graph_basics.workflow` |
 | **[L2a](L2a_parallel_join/)** · Graph 1 (Pillar 1) | I can draw the flow ahead of time | parallel fan-out · `JoinNode` · one agent | `python -m L2a_parallel_join.workflow` |
 | **[L2b](L2b_router/)** · Graph 2 (Pillar 1) | Branch without asking the model | deterministic `if`-router · dict edge · **1 LLM call** | `python -m L2b_router.workflow` |
-| **[L3](L3_collaborative/)** · Collaborative (Pillar 2) | Known team, request picks the subset | `Agent(sub_agents=...)` · `single_turn` · dynamic subset in parallel | `python -m L3_collaborative.concierge` |
+| **[L3a](L3a_collaborative/)** · Collaborative (Pillar 2) | Known team, request picks the subset | same team run in `chat` then `single_turn` — one flag, two worlds | `python -m L3a_collaborative.concierge` |
+| **[L3b](L3b_task_desk/)** · Task mode (Pillar 2) | Talk until the fields are collected, then return | `mode="task"` · paused task · `finish_task` · validated return | `python -m L3b_task_desk.desk` |
 | **[L4a](L4a_flat_research/)** · Dynamic 1 (Pillar 3) | Runtime *width* | `@node(parallel_worker=True)` · runtime-sized fan-out | `python -m L4a_flat_research.deep_research` |
 | **[L4b](L4b_recursion/)** · Dynamic 2 (Pillar 3) | Runtime *depth* | recursive `ctx.run_node` · bounded `MAX_DEPTH` | `python -m L4b_recursion.deep_research` |
 | **[L5](L5_capstone/)** · Capstone | Which pattern, when? | the decision tree · 1.x-vs-2 · how they compose | *(reading)* |
@@ -52,7 +53,7 @@ There are **two ways to run locally** (they use the same code):
 ```bash
 ./run.sh                   # → http://localhost:8080, pick a level from the dropdown
 ```
-> Only the **`L0…L4b`** folders are runnable agents. `shared/`, `notebooks/`, `codelab/`, `L5_capstone/` may also appear in the dropdown but aren't agents.
+> Only the **`L0…L4b`** folders (including `L3a`/`L3b`) are runnable agents. `shared/`, `notebooks/`, `codelab/`, `L5_capstone/` may also appear in the dropdown but aren't agents.
 
 **B) Run one level with its teaching output** — the parallel timing, the router branch, the recursion trace. This is the recommended way to *learn* each pattern, and it mirrors the Colab cells 1:1.
 ```bash
@@ -60,7 +61,9 @@ python -m L0_first_agent.agent
 python -m L1_graph_basics.workflow
 python -m L2a_parallel_join.workflow HOT
 python -m L2b_router.workflow COLD
-python -m L3_collaborative.concierge "Should I race today?"
+python -m L3a_collaborative.concierge --mode chat "What about fueling?"   # watch chat mode strand
+python -m L3a_collaborative.concierge "Should I race today?"
+python -m L3b_task_desk.desk                                             # task: pause → resume → finish_task
 python -m L4a_flat_research.deep_research
 python -m L4b_recursion.deep_research
 ```
@@ -79,11 +82,11 @@ Always run levels as **modules from the repo root** (`python -m L2b_router.workf
 
 - **Package:** `google-adk==2.3.0` (latest stable; every level was verified on it — see note below).
 - **Model:** `gemini-flash-latest`.
-- **Cost:** L0–L2b are cheap (0–1 model call each). L3 makes a handful. **L4a is 5–9 calls; L4b is 5–30 per run** — run those deliberately.
+- **Cost:** L0–L2b are cheap (0–1 model call each). L3a makes ~6–10 across its two beats; L3b ~4. **L4a is 5–9 calls; L4b is 5–30 per run** — run those deliberately.
 
 > **Version note.** Verified on **2.3.0** and on 2.0.0b1. Every API this tutorial uses (`Workflow(edges=...)`, `JoinNode`, `@node(parallel_worker=True)`, `Agent(sub_agents=..., mode="single_turn")`) behaves identically on both.
 >
-> The ADK 2 line is **not** frozen, though: `mode="task"` could not be a static workflow graph node on 2.0.0b1–2.3.0 (`Workflow()` raised at construction) and **can** on 2.5.0. This tutorial never uses `task` mode, so the pin is safe — but don't assume "ADK 2.x" is one behavior surface. Re-verify when you bump.
+> The ADK 2 line is **not** frozen, though: `mode="task"` could not be a static workflow *graph node* on 2.0.0b1–2.3.0 (`Workflow()` raised at construction) and **can** on 2.5.0. L3b uses `task` mode in exactly the shape 2.3.0 allows — a chat coordinator with a task *sub-agent* — so the pin is safe. But don't assume "ADK 2.x" is one behavior surface; re-verify when you bump.
 
 ## Repo layout
 ```
@@ -92,7 +95,8 @@ L0_first_agent/          # Agent + Runner
 L1_graph_basics/         # first Workflow: function node → agent node
 L2a_parallel_join/       # Pillar 1a: parallel fetch + JoinNode → one agent
 L2b_router/              # Pillar 1b: + deterministic router → 1 of 3 agents
-L3_collaborative/        # Pillar 2: coordinator + 6 single_turn specialists
+L3a_collaborative/       # Pillar 2: same team in chat vs single_turn — one flag, two worlds
+L3b_task_desk/           # Pillar 2: task mode — paused clarify, scripted resume, finish_task
 L4a_flat_research/       # Pillar 3a: decompose → flat parallel research
 L4b_recursion/           # Pillar 3b: + recursive ctx.run_node, bounded depth
 L5_capstone/             # decision tree + 1.x-vs-2 + composition (reading)
@@ -105,11 +109,13 @@ run.sh                   # launch the ADK web UI (adk web) to browse all levels
 Each `LX/__init__.py` re-exports its main node as `root_agent` (`from .workflow import root as root_agent`) — that's what lets `adk web` discover it, matching the `adk_tutorial` layout.
 
 ### The three artifacts stay in sync
-The runnable `L*/` modules are the **single source of truth**. `notebooks/build.py` reads them and regenerates the Colab notebook (inlining `shared/`, stripping imports, adding stable cell ids). The [codelab](codelab/) deep-links each step to its notebook cell (`…ipynb#scrollTo=<id>`) and lists the matching `python -m …` command.
+The runnable `L*/` modules are the single source for **code**; the **codelab is the single source for teaching prose** — regions marked `<!-- beat:X -->` in `codelab/adk2-orchestration.md` are extracted by `build.py` into the notebook's markdown cells, so an idea edited once lands in both artifacts.
+
+For code: `notebooks/build.py` reads them and regenerates the Colab notebook (inlining `shared/`, stripping imports, adding stable cell ids). The [codelab](codelab/) deep-links each step to its notebook cell (`…ipynb#scrollTo=<id>`) and lists the matching `python -m …` command.
 
 Edit a module → run `python notebooks/build.py` → commit. Colab loads the notebook **straight from this repo**, so pushing is the whole sync step — there is no separate upload to keep in step.
 
 ## A note on running it (what "easy to run" honestly means)
-L3 opens with `UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled` — that's ADK noting that pydantic `input_schema`s on subagents go through its experimental JSON-schema path. Expected, harmless, prints once.
+L3a opens with `UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled` — that's ADK noting that pydantic `input_schema`s on subagents go through its experimental JSON-schema path. Expected, harmless, prints once.
 
-Beyond that, these are live, nondeterministic models. Two things you may occasionally see, both expected and both harmless: an **`Error validating input`** line in L3 (the coordinator has to re-serialize a large nested schema for each parallel call and sometimes fumbles one — it recovers and still synthesizes), and a **`cancelling N leftover tasks`** line at the end of L4b (ADK tearing down its parallel task group; it's a log warning, so depending on your logging config you may never see it). Neither stops the run.
+Beyond that, these are live, nondeterministic models. Two things you may occasionally see, both expected and both harmless: an **`Error validating input`** line in L3a (the coordinator has to re-serialize a large nested schema for each parallel call and sometimes fumbles one — it recovers and still synthesizes), and a **`cancelling N leftover tasks`** line at the end of L4b (ADK tearing down its parallel task group; it's a log warning, so depending on your logging config you may never see it). Neither stops the run.

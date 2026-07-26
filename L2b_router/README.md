@@ -33,4 +33,4 @@ python -m L2b_router.workflow COLD      # Chicago, 35°F
 
 > **Where ADK 2 gives this a direct home:** 1.x could reach 1 call too — via a custom `BaseAgent` subclass — but only if you wrote the orchestration plumbing yourself, so most builds wrapped each step as an agent and paid 4. Here a plain function and an `if`-statement are first-class nodes.
 
-→ **Next:** [L3](../L3_collaborative/) — when the *request* (not you) decides which specialists run.
+→ **Next:** [L3a](../L3a_collaborative/) — when the *request* (not you) decides which specialists run.
