@@ -143,6 +143,7 @@ root = Workflow(
 )
 
 
+# [harness]
 def _event_text(event):
     msg = getattr(event, "message", None)
     if msg and getattr(msg, "parts", None):

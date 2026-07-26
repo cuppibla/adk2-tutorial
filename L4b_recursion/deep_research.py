@@ -172,6 +172,7 @@ l4b_workflow = Workflow(
 )
 
 
+# [harness]
 async def run(query="Tell me everything I should know about racing the Boston Marathon."):
     print(f"=== L4b · recursive deep research ===\n  QUERY: {query}\n")
     runner = Runner(node=l4b_workflow, app_name="l4b", session_service=InMemorySessionService(), auto_create_session=True)

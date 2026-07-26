@@ -141,6 +141,7 @@ The user's message contains the strategy + runner data as JSON — extract and f
 race_concierge = build_team("single_turn")
 
 
+# [harness]
 # ─── A run harness that shows WHO decided, WHO ran, and WHO answered. ──────────
 
 def _build_message(question: str) -> gtypes.Content:

@@ -91,6 +91,7 @@ the runner in ONE sentence.""",
 )
 
 
+# [harness]
 # ─── Harness: two turns, annotated. ────────────────────────────────────────────
 
 async def _turn(runner: Runner, text: str, t0: float) -> tuple[str | None, bool]:

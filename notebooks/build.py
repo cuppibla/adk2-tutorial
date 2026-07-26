@@ -146,7 +146,7 @@ By the end of this adventure, you'll be able to:
    ready →   flows →   graph →   team →   dynamic →  🏁
 ```
 
-> 🏁 Run the cells **top to bottom**. Ready? Let's go! 👇""", "intro"))
+**How each level works — three cells, one rhythm:** 📖 the *lesson* (short, every line is ADK) → 🔧 *run helpers* (folded; printing plumbing, not ADK — just run it, never required reading) → ▶ your *playground* (2 lines; edit, predict, re-run).\n\n> 🏁 Run the cells **top to bottom**, including the folded 🔧 ones. Ready? Let's go! 👇""", "intro"))
 
 cells.append(md("""## Author ✍️
 
@@ -307,11 +307,24 @@ BOXES = {
 ```""",
 }
 
+HELPER_TITLE = ("#@title 🔧 Run helpers — printing only, NOT ADK. "
+                "Run me once; expand only if curious.")
+
 for cid, title, intro, modpath, driver in LEVELS:
     box = ("\n\n" + BOXES[cid]) if cid in BOXES else ""
     cells.append(md(f"---\n## {title}\n\n{intro}\n\n{BEATS[cid]}{box}", f"{cid}_md"))
     body = module_to_cell(read(modpath))
-    cells.append(code(f"{body}\n\n{driver}", cid))
+    # Modules mark where the teaching scaffold begins with `# [harness]`.
+    # Everything above it is the LESSON (pure ADK); everything below is printing
+    # plumbing, which ships as a separate, form-collapsed cell so the learner
+    # reads ~40 lines of concept instead of a 170-line wall.
+    assert "# [harness]" in body, f"{modpath}: missing # [harness] marker"
+    concept, harness = body.split("# [harness]", 1)
+    cells.append(code(concept.strip(), cid))
+    hcell = code(HELPER_TITLE + "\n" + harness.strip(), f"{cid}_h")
+    hcell["metadata"]["cellView"] = "form"
+    cells.append(hcell)
+    cells.append(code(f"# ▶ Your playground — edit these lines and re-run!\n{driver}", f"{cid}_run"))
 
 cells.append(md("---\n## 🧭 L5 · Which Pattern, When? (the finish line 🏁)\n\n" + BEATS["L5"] + """
 

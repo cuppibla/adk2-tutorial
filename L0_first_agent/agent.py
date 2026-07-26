@@ -50,6 +50,7 @@ pace_coach = Agent(
 )
 
 
+# [harness]
 def _event_text(event) -> str | None:
     """Pull human-readable text out of an event, whichever field carries it."""
     if getattr(event, "message", None) and getattr(event.message, "parts", None):
