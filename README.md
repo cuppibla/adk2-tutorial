@@ -23,7 +23,8 @@ Every level answers one question, adds one idea, and stays runnable on its own. 
 
 | Level | The question it answers | What you learn | Run |
 |---|---|---|---|
-| **[L0](L0_first_agent/)** · First agent | Can I get a model to answer? | `Agent` + `Runner` — the atom | `python -m L0_first_agent.agent` |
+| **[P](shared/prologue.py)** · Prologue | Why not one big prompt? | run the mega-prompt, watch it **invent** its data | `python -m shared.prologue` |
+| **[L0](L0_first_agent/)** · First agent | Can I get a model to answer — and use real code? | `Agent` + `Runner` + a **tool** the model chooses to call | `python -m L0_first_agent.agent` |
 | **[L1](L1_graph_basics/)** · First workflow | How do code and an LLM share one flow? | `Workflow(edges=...)`; function node + agent node are peers | `python -m L1_graph_basics.workflow` |
 | **[L2a](L2a_parallel_join/)** · Graph 1 (Pillar 1) | I can draw the flow ahead of time | parallel fan-out · `JoinNode` · one agent | `python -m L2a_parallel_join.workflow` |
 | **[L2b](L2b_router/)** · Graph 2 (Pillar 1) | Branch without asking the model | deterministic `if`-router · dict edge · **1 LLM call** | `python -m L2b_router.workflow` |
@@ -57,6 +58,7 @@ There are **two ways to run locally** (they use the same code):
 
 **B) Run one level with its teaching output** — the parallel timing, the router branch, the recursion trace. This is the recommended way to *learn* each pattern, and it mirrors the Colab cells 1:1.
 ```bash
+python -m shared.prologue                                                # the 'before' picture: watch it invent data
 python -m L0_first_agent.agent
 python -m L1_graph_basics.workflow
 python -m L2a_parallel_join.workflow HOT
