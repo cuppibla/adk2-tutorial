@@ -6,7 +6,7 @@
 
 <!-- Loads notebooks/ straight from this repo, so it is always current. No manual Drive re-upload. -->
 
-There are three ways to take this tutorial. **All cover the same eight levels.**
+There are three ways to take this tutorial. **All cover the same nine levels.**
 - **📖 Codelab (guided)** — a step-by-step walkthrough that wraps the Colab: [`codelab/adk2-orchestration.md`](codelab/). Best for following along start to finish.
 - **▶ Colab (zero setup)** — click the badge, add your API key, run cells top to bottom. Best for "just show me it running."
 - **💻 Local (GitHub)** — clone, `./setup_venv.sh`, run each level as a module. Best for editing and keeping the code.
@@ -86,7 +86,7 @@ Always run levels as **modules from the repo root** (`python -m L2b_router.workf
 
 > **Version note.** Verified on **2.3.0** and on 2.0.0b1. Every API this tutorial uses (`Workflow(edges=...)`, `JoinNode`, `@node(parallel_worker=True)`, `Agent(sub_agents=..., mode="single_turn")`) behaves identically on both.
 >
-> The ADK 2 line is **not** frozen, though: `mode="task"` could not be a static workflow graph node on 2.0.0b1–2.3.0 (`Workflow()` raised at construction) and **can** on 2.5.0. This tutorial never uses `task` mode, so the pin is safe — but don't assume "ADK 2.x" is one behavior surface. Re-verify when you bump.
+> The ADK 2 line is **not** frozen, though: `mode="task"` could not be a static workflow *graph node* on 2.0.0b1–2.3.0 (`Workflow()` raised at construction) and **can** on 2.5.0. L3b uses `task` mode in exactly the shape 2.3.0 allows — a chat coordinator with a task *sub-agent* — so the pin is safe. But don't assume "ADK 2.x" is one behavior surface; re-verify when you bump.
 
 ## Repo layout
 ```
