@@ -138,6 +138,8 @@ You're set up! 🎽 One quick detour before **L0** — the version everyone buil
 Duration: 3
 
 <!-- beat:WHY -->
+**⚡ Before you run it, lock in the ONE thing to watch: where does every specific number come from?** That's the entire exercise — everything else is decoration.
+
 Before the ladder, run the thing the ladder replaces: **one agent whose prompt promises everything** — fetch the weather, analyze the course, read the training log, route by conditions, output the plan.
 
 **What you'll see:** a confident, specific, well-formatted strategy… whose numbers are **invented**. In one live run it opened with *"I have pulled today's weather metrics"* and reported 52°F, a 9 mph wind, and an analysis of a training log it has never seen. There is no weather API here, no course data, no log — one opaque model call either fabricates its inputs or hedges them into uselessness.
@@ -161,6 +163,8 @@ Duration: 4
 ![Roadmap — you are here: L0](img/roadmap-L0.png)
 
 <!-- beat:L0 -->
+**⚡ TL;DR:** an agent is a model + an instruction + **tools it may call**; a `Runner` executes it. Everything after this level is just more agents, arranged in better shapes.
+
 **The question:** can you get a model to answer — and to reach for **real code** when arithmetic matters?
 
 **The one idea — three parts:**
@@ -193,6 +197,8 @@ async for event in runner.run_async(user_id="u1", session_id="s1", new_message=m
 ```
 
 <!-- beat:L0 -->
+> 🔍 **The markers:** `Agent(...)` · `tools=[pace_splits]` · `Runner(...)`. And in the output, the `🔧` line — that's the **model deciding**, mid-answer, to call your code.
+
 **What you'll see:**
 
 ```
@@ -206,6 +212,8 @@ The 🔧 lines are the lesson: mid-answer, the **model chose** to call your func
 > aside positive
 > Everything else in this codelab is just *more agents, arranged in more interesting shapes*. This is the atom.
 
+> ❓ **You might be wondering:** *does the model always call the tool?* No — it decides, per question. Ask something with no numbers in it and the 🔧 lines vanish (the playground has you try exactly this).
+
 > 👀 **Read:** `pace_splits` (a plain function) and the `tools=[pace_splits]` line. · ▶ **Run** it. · ✏️ **Change:** ask the *general* question (no goal time) — notice the 🔧 lines disappear: **the model decides** when a tool is worth calling. Then rewrite the `instruction` and re-run — the instruction is the rest of the program.
 <!-- /beat:L0 -->
 
@@ -215,6 +223,8 @@ Duration: 4
 ![Roadmap — you are here: L1](img/roadmap-L1.png)
 
 <!-- beat:L1 -->
+**⚡ TL;DR:** a plain function and an LLM agent are the **same kind of node**. Predictable work → function (0 LLM, deterministic); reasoning → agent.
+
 **The question:** how do you mix plain code and an LLM in one flow, without paying for a model call on the parts that are just code?
 
 **The one idea:** in a `Workflow`, a **plain Python function and an LLM agent are both just nodes** in the same `edges` list.
@@ -241,7 +251,11 @@ workflow = Workflow(edges=[(START, fetch_conditions, advise)])
 ```
 
 <!-- beat:L1 -->
+> 🔍 **The markers:** one edge tuple — `(START, fetch_conditions, advise)` — with a bare Python function sitting in the middle of it, and `input_schema=` validating the hand-off.
+
 **What's new vs L0:** `Workflow(edges=[...])`, `START` (where input enters), a function node returning `Event(output=...)`, and `input_schema=Conditions` so the function's output is validated against that schema before the agent sees it (as JSON text — `input_schema` validates the boundary, it does not hand the agent a Python object).
+
+> ❓ **You might be wondering:** *is function-then-agent the required order?* No — any order, any mix, any count. `advise` runs second only because it needs `fetch_conditions`' data. The lesson is the peerage, not the sequence.
 
 > 👀 **Read:** `fetch_conditions` returns data with **no model call**; `advise` has `input_schema=Conditions`. · ▶ **Run** it. · ✏️ **Change:** set `temp_f=30` in the function and re-run — the advice flips, and the function still cost 0 LLM calls.
 <!-- /beat:L1 -->
@@ -252,6 +266,8 @@ Duration: 4
 ![Roadmap — you are here: L2a](img/roadmap-L2a.png)
 
 <!-- beat:L2a -->
+**⚡ TL;DR:** fan out in parallel (free), wait for **all**, bundle, hand one agent the complete picture.
+
 **The question:** you can *draw the flow before the input arrives*. Start with the skeleton: gather data in parallel, bundle it, hand it to one agent.
 
 **The shape:**
@@ -268,6 +284,8 @@ START ──► pull_fitness ───┘   (bundles)
 ![L2a flow](img/diagram-l2a.png)
 
 <!-- beat:L2a -->
+> 🔍 **The markers:** three edges that all start at `START` — that *is* the fan-out — and `JoinNode`, the meeting point.
+
 - The three fetches are **functions** — they run **in parallel**, 0 LLM calls.
 - **`JoinNode`** waits for all three and bundles them into one typed payload (`BundledRunData`), keyed by function name.
 - One `strategy` agent reads the bundle and writes a `RaceStrategy`.
@@ -279,6 +297,8 @@ START ──► pull_fitness ───┘   (bundles)
 
 > 💡 **Prologue callback:** the mega-prompt *invented* its weather. Here the temperature comes out of a fetch **function** — real code, real seam. Swap the canned dict for an actual weather API and nothing else changes.
 
+> ❓ **You might be wondering:** *how much `JoinNode` do I need to understand?* One sentence: it waits until every parallel branch lands, packs the outputs into **one dict keyed by the upstream function's name**, and computes nothing itself. That dict is exactly why L2b's router can write `node_input["fetch_weather"]["temp_f"]`.
+
 > 👀 **Read:** three edges fan out from `START`; `JoinNode` bundles them for one agent. · ▶ **Run** it and read the *timestamps*, not the total. · ✏️ **Change:** make one fetch sleep `3.0` — predict the new fan-out end time first, then verify.
 <!-- /beat:L2a -->
 
@@ -288,6 +308,8 @@ Duration: 4
 ![Roadmap — you are here: L2b](img/roadmap-L2b.png)
 
 <!-- beat:L2b -->
+**⚡ TL;DR:** L2a untouched + a plain `if` decides which **one** agent runs. Branching, without asking the model.
+
 **The question:** the plan should differ for hot vs cold weather. How do you branch — *without* asking the model to decide?
 
 **The shape (L2a + a router):**
@@ -313,6 +335,8 @@ def route_by_weather(node_input):                        # an if-statement, 0 LL
 ```
 
 <!-- beat:L2b -->
+> 🔍 **The markers:** `Event(output=…, route=…)` — a function node *naming* the path — and the dict-edge `{"HOT": …, "NORMAL": …, "COLD": …}` that maps names to nodes.
+
 **The takeaway — three kinds of work, three homes:**
 
 - Predictable work → **functions** (the 3 parallel fetches)
@@ -326,6 +350,8 @@ def route_by_weather(node_input):                        # an if-statement, 0 LL
 
 > ⚠️ **If you add a fourth branch,** give the route-dict a `DEFAULT_ROUTE` entry too. A route the dict doesn't match isn't an error — the branch simply ends, and the program exits **0 with no output**, which is a confusing dead end to debug.
 
+> ❓ **You might be wondering:** *so L2b is literally L2a plus a router?* Yes — the fetches and the join are untouched, and it's still exactly **1 LLM call**. What changed: "always the same agent" became "one of three, chosen by data".
+
 > 👀 **Read:** `route_by_weather` — the router is an `if`-statement, not an agent. · ▶ **Run** `run("COLD")` too. · ✏️ **Change:** add a `WINDY` branch with a fourth agent — and read the `DEFAULT_ROUTE` warning above *before* you do.
 <!-- /beat:L2b -->
 
@@ -335,6 +361,8 @@ Duration: 6
 ![Roadmap — you are here: L3a](img/roadmap-L3a.png)
 
 <!-- beat:L3a -->
+**⚡ TL;DR:** same team, one flag. `chat` hands the **whole conversation** to one specialist and never comes back; `single_turn` turns each specialist into a **tool** — parallel subset, auto-return, one synthesis.
+
 **The question:** you know the **team**, but the **request** decides which members should answer. How do you let an LLM pick the subset — and run them concurrently?
 
 **The shape:** a coordinator over six specialists (medical, weather, pacing, gear, nutrition, mental). This level runs the **same team twice** — same coordinator prompt, same six specialists. The only difference is one flag on the subagents. **The contrast is the lesson.**
@@ -345,6 +373,8 @@ Duration: 6
 ![L3a flow](img/diagram-l3a.png)
 
 <!-- beat:L3a -->
+> 🔍 **The markers:** `mode="single_turn"` in the factory — and in the *output*, `TRANSFER →` (beat 1) versus a burst of `DISPATCH →` lines sharing one timestamp (beat 2).
+
 ### Beat 1 · Run the default first — and watch it fail the job
 
 No `mode=` written → subagents default to **`chat`**. What you'll see:
@@ -385,6 +415,8 @@ Now ADK injects **one delegation tool per specialist** — named after the subag
 
 > ⚠️ Two honest caveats: (1) the model picks the subset, so it's **less deterministic** than L2's hard-coded router — the exact subset can vary run to run. (2) Occasionally you'll see an `Error validating input: ...` line for one specialist. It is almost never the specialist's *output* — `output_schema` makes Gemini enforce that server-side. It's the **input**: the coordinator has to reproduce the whole nested `SpecialistInput` verbatim for every parallel call, and sometimes it fumbles one. ADK returns the error as that tool's result, the coordinator recovers, and the synthesis still lands.
 
+> ❓ **You might be wondering:** *is `chat` just 1.x-style delegation — one agent at a time?* Essentially yes: it's the 1.x default behavior, now with a name. The gap to `single_turn` is three-dimensional: what the coordinator holds (one `transfer_to_agent` vs one tool **per specialist**) · how many can work (one, owning the conversation vs N in parallel) · whether control returns (never vs automatically, with results). *And about the code:* the factory's `if mode ==` branch exists **only** so one team can be built both ways for this contrast — a real app hardcodes one mode and the `if` disappears.
+
 > 👀 **Read:** the `_specialist` factory — the `mode` parameter is the whole level. · ▶ **Run** both beats. · ✏️ **Change:** ask *"my knee hurts at mile 18"* — **predict the subset first**, then check the DISPATCH lines.
 <!-- /beat:L3a -->
 
@@ -410,6 +442,8 @@ Duration: 5
 ![Roadmap — you are here: L3b](img/roadmap-L3b.png)
 
 <!-- beat:L3b -->
+**⚡ TL;DR:** the middle mode — talk to the user **until the fields are collected**, then auto-return with a **validated object**.
+
 **The question:** L3a left a gap. `chat` owns the whole conversation; `single_turn` never talks to the user at all. But real intake work sits in between: *"talk to the user UNTIL you've collected X — then come back with a validated object."* Which mode is that?
 
 **The shape:**
@@ -425,6 +459,8 @@ race_desk (coordinator)
 ![L3b flow](img/diagram-l3b.png)
 
 <!-- beat:L3b -->
+> 🔍 **The markers:** `mode="task"` + `output_schema=` on the *same* agent — and in the output, the ⏸ pause and the `finish_task` call.
+
 **What you'll see:**
 
 ```
@@ -460,6 +496,8 @@ Three things happened that neither L3a mode can do:
 
 > 💡 **Go deeper:** a `task` agent embedded in a *graph workflow* (the 2.5.0+ shape), with routing that can loop the conversation back for a retry: companion repo [`22_agent_in_workflow`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/22_agent_in_workflow) · full mode guide: [`docs/agent-modes.md`](https://github.com/cuppibla/adk-workflows-compared/blob/main/docs/agent-modes.md).
 
+> ❓ **You might be wondering:** *what does `task` buy me that the other two can't?* Three things: **auto-return** (chat carries the conversation away instead) · a **typed finish line** (`finish_task`'s payload must validate against the schema — you get data back, not a transcript) · **pause/resume** (the ⏸ is a held task waiting for a human, not a hang).
+
 > 👀 **Read:** `gear_fitter` — `mode="task"` + `output_schema` is the entire contract. · ▶ **Run** it. · ✏️ **Change:** `run_desk("I need a hydration vest", "2 liters, medium")` — the clarifying question adapts, the finish line stays typed.
 <!-- /beat:L3b -->
 
@@ -469,6 +507,8 @@ Duration: 5
 ![Roadmap — you are here: L4a](img/roadmap-L4a.png)
 
 <!-- beat:L4a -->
+**⚡ TL;DR:** the skeleton is still three static steps — dynamic hides **inside** the middle one, where the width is decided by data at runtime.
+
 > ⚠️ **Heads-up: this is the steepest step of the ladder.** The previous level was 44 lines; this one is ~120 — three agents and two workflow nodes, and none of it is padding. Budget ~15 minutes, and lean on the Read/Run/Change line at the end: you don't need to absorb every line on the first pass.
 
 **The question:** the *shape* of the work depends on the input. You can't draw the graph ahead of time. Start with runtime **width**: let the LLM decide *how many* sub-questions.
@@ -492,6 +532,8 @@ An open-ended question is **decomposed** into N sub-questions — **N is chosen 
 ![L4a flow](img/diagram-l4a.png)
 
 <!-- beat:L4a -->
+> 🔍 **The markers — there is no `dynamic=True` switch.** Dynamic is a way of *writing*, not a config. Two markers and only two: `@node(parallel_worker=True)` (takes a runtime-sized list, runs one worker per item) and `ctx.run_node(...)` (code scheduling nodes directly). See either one → you're in dynamic.
+
 **What you'll see:** the decomposer prints e.g. 5 sub-questions, they research in parallel, then a synthesized briefing. The *number* differs on every run — the fixed graph couldn't do that.
 
 > aside positive
@@ -502,6 +544,8 @@ An open-ended question is **decomposed** into N sub-questions — **N is chosen 
 - **`rerun_on_resume=True` is mandatory** on any node that calls `ctx.run_node` — ADK raises a `ValueError` without it. On resume it must re-execute the dispatching node to rebuild the children it spawned, since those aren't in the static graph.
 - **`retry_config=` bounds how this FAILS.** A parallel worker cancels every sibling and re-raises the instant one child fails — so without a retry, a single transient 429 discards the whole run, including every call already paid for. The retry lands on the inner per-item node, so each branch retries independently.
 
+> ❓ **You might be wondering:** *where does ADK "know" this is dynamic?* It doesn't need to — nothing is declared anywhere. The decomposer produces a list at runtime; the parallel worker sizes itself to whatever arrives. The dynamism is a property of the data flow you wrote, not a mode you switched on.
+
 > 👀 **Read:** the two flags on `research_topic` — `parallel_worker` and `rerun_on_resume`. · ▶ **Run** it. · ✏️ **Change:** swap in your own open question — N changes because the *input* decided the width.
 <!-- /beat:L4a -->
 
@@ -511,6 +555,8 @@ Duration: 5
 ![Roadmap — you are here: L4b](img/roadmap-L4b.png)
 
 <!-- beat:L4b -->
+**⚡ TL;DR:** recursion is **written, not given** — the worker calls *itself* through `ctx.run_node`, ordinary Python — so the brake must be written too. That's `MAX_DEPTH`.
+
 **The question:** one research finding sometimes surfaces a narrow sub-topic worth its own investigation. How do you let a branch **spawn more parallel work** — and keep it bounded?
 
 **The shape (now recursive):**
@@ -541,6 +587,8 @@ async def research_topic(ctx, node_input):
 ```
 
 <!-- beat:L4b -->
+> 🔍 **The markers:** `ctx.run_node(research_topic, …)` **inside** `research_topic` itself — self-reference *is* the recursion — and the guard `depth < MAX_DEPTH` one line above it.
+
 **What you'll see:** research nodes printing `spawning N deeper` — recursion happening live — then a runtime tree shape (e.g. `5 top-level + 10 recursive children`). The tree differs on every run.
 
 > aside positive
@@ -551,6 +599,8 @@ async def research_topic(ctx, node_input):
 
 > ⚠️ **Before you raise the knob:** the ceiling grows fast — `MAX_DEPTH=3` takes the worst case from ~30 calls to ~93. And at the very end of a run you may see a `cancelling N leftover tasks` log line: that's ADK tearing down its parallel task group after the result is already complete. Harmless — and depending on your logging config you may never see it.
 
+> ❓ **You might be wondering:** *isn't dynamic recursive by default?* No — L4a is fully dynamic with **zero** recursion. Dynamic only hands you ordinary Python control flow; L4b *chooses* to write recursion with it. And because **you** wrote the recursion, **you** must write its boundary — this is where *"let the LLM shape the work, keep the boundaries in code"* stops being a slogan.
+
 > 👀 **Read:** the guard: `if finding.needs_deeper and depth < MAX_DEPTH`. · ▶ **Run** it. · ✏️ **Change:** set `MAX_DEPTH = 1` and re-run — the tree flattens (and the run gets cheaper). The boundary is YOURS, in code.
 <!-- /beat:L4b -->
 
@@ -560,6 +610,8 @@ Duration: 5
 ![Roadmap — you are here: L5](img/roadmap-L5.png)
 
 <!-- beat:L5 -->
+**⚡ TL;DR:** one axis decides everything — **who picks the next step: the graph you drew, the LLM, or your code.**
+
 You've built all three. This is the model that makes them useful: **match the pattern to the shape of your problem.**
 
 ### The axis: who decides what runs next?

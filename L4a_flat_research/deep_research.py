@@ -130,6 +130,8 @@ async def decompose(ctx, node_input):
 # key, the schema bound is what keeps the in-flight count sane.
 RESEARCH_RETRY = RetryConfig(max_attempts=3, initial_delay=2.0, backoff_factor=2.0)
 
+# ★ parallel_worker: one worker per list item — and the list's SIZE arrives at runtime.
+#   There is no dynamic=True switch anywhere; this flag and ctx.run_node ARE dynamic.
 @node(parallel_worker=True, rerun_on_resume=True,
       retry_config=RESEARCH_RETRY)
 async def research_topic(ctx, node_input):

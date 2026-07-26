@@ -84,7 +84,7 @@ advise = Agent(
 workflow = Workflow(
     name="l1_graph_basics",
     description="One function node feeds one agent node.",
-    edges=[(START, fetch_conditions, advise)],
+    edges=[(START, fetch_conditions, advise)],   # ★ a function and an agent — peers in one chain
 )
 
 

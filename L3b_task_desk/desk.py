@@ -73,8 +73,8 @@ class GearOrder(BaseModel):
 gear_fitter = Agent(
     name="gear_fitter",
     model=MODEL,
-    mode="task",                      # ← the whole level, in one flag
-    output_schema=GearOrder,          # ← the finish line the conversation must reach
+    mode="task",                      # ★ the whole level, in one flag
+    output_schema=GearOrder,          # ★ the typed finish line the conversation must reach
     description="Race-gear fitting desk. Collects the runner's size, then returns a GearOrder.",
     instruction="""You fit race gear. You MUST know the runner's size before finishing.
 If the size is not given, ask ONE short clarifying question for it.
