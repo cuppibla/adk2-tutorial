@@ -29,7 +29,7 @@ This lab created a project for you when you pressed **Start Lab**, assigned a re
    gcloud config set project $GOOGLE_CLOUD_PROJECT
    </ql-code-block>
 
-## Task 1. Prepare your environment
+## Task 1. Initialize your environment
 
 In this task, you clone the tutorial repository, set up a Python virtual environment, and install the required libraries.
 

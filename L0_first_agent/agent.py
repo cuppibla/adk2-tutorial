@@ -45,6 +45,11 @@ if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or _vertex):
 
 
 MODEL = os.getenv("ADK_MODEL", "gemini-flash-latest")   # AI Studio alias; on Vertex set ADK_MODEL=gemini-2.5-flash
+if os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "").lower() in ("true", "1", "yes") and "latest" in MODEL:
+    sys.exit(
+        f"\u2717 ADK_MODEL={MODEL!r} is an AI-Studio-only alias and 404s on Vertex AI.\n"
+        "  export ADK_MODEL=gemini-2.5-flash   (then re-run)"
+    )
 
 
 # 1) A tool is just a Python function with a docstring and type hints —

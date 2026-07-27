@@ -82,10 +82,21 @@ def asides_to_infoboxes(text: str) -> str:
 
 
 def python_fences_to_blocks(text: str) -> str:
+    """Python fences are illustrative EXCERPTS, never paste-me steps.
+
+    Qwiklabs renders every ql-code-block with a copy button, so an unlabelled
+    excerpt looks exactly like an instruction. Labelling them also keeps this
+    lab clear of the platform's worst known trap: agy001 burned five commits
+    fighting the renderer mangling pasted Python indentation before settling
+    for a warning box (7c9ef3b). Students here clone and run — never paste —
+    and this label is what keeps it that way.
+    """
     def repl(m):
         code = m.group(1)
         attr = " templated" if "{{{" in code else ""
-        return f'<ql-code-block language="python"{attr}>\n{code}</ql-code-block>'
+        return ("_Excerpt from the file you just cloned — read it, don't paste it; "
+                "you run it with the command above._\n\n"
+                f'<ql-code-block language="python"{attr}>\n{code}</ql-code-block>')
     return re.sub(r"```python\n(.*?)```", repl, text, flags=re.S)
 
 

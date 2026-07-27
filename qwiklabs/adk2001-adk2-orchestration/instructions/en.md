@@ -65,7 +65,7 @@ This lab created a project for you when you pressed **Start Lab**, assigned a re
    gcloud config set project $GOOGLE_CLOUD_PROJECT
    </ql-code-block>
 
-## Task 1. Prepare your environment
+## Task 1. Initialize your environment
 
 In this task, you clone the tutorial repository, set up a Python virtual environment, and install the required libraries.
 
@@ -146,6 +146,8 @@ python -m L0_first_agent.agent "What is the most common mistake first-time marat
 
 ![L0 flow](img/diagram-l0.png)
 
+_Excerpt from the file you just cloned — read it, don't paste it; you run it with the command above._
+
 <ql-code-block language="python">
 def pace_splits(target_finish: str) -> dict:
     """Convert a goal time like '3:30:00' into exact per-mile / per-km paces."""
@@ -207,6 +209,8 @@ python -m L1_graph_basics.workflow
 ![L1 flow](img/diagram-l1.png)
 
 The function node prints the data it produced (no model call), then the agent gives advice that references the actual temperature and wind it received:
+
+_Excerpt from the file you just cloned — read it, don't paste it; you run it with the command above._
 
 <ql-code-block language="python">
 def fetch_conditions(node_input):                # function node — 0 LLM
@@ -303,6 +307,8 @@ python -m L2b_router.workflow COLD
 </ql-code-block>
 
 ![L2b flow](img/diagram-l2b.png)
+
+_Excerpt from the file you just cloned — read it, don't paste it; you run it with the command above._
 
 <ql-code-block language="python">
 def route_by_weather(node_input):                        # an if-statement, 0 LLM
@@ -402,6 +408,8 @@ Now ADK injects **one delegation tool per specialist** — named after the subag
 > ❓ **You might be wondering:** *is `chat` just 1.x-style delegation — one agent at a time?* Essentially yes: it's the 1.x default behavior, now with a name. The gap to `single_turn` is three-dimensional: what the coordinator holds (one `transfer_to_agent` vs one tool **per specialist**) · how many can work (one, owning the conversation vs N in parallel) · whether control returns (never vs automatically, with results). *And about the code:* the factory's `if mode ==` branch exists **only** so one team can be built both ways for this contrast — a real app hardcodes one mode and the `if` disappears.
 
 > 👀 **Read:** the `_specialist` factory — the `mode` parameter is the whole level. · ▶ **Run** both beats. · ✏️ **Change:** ask *"my knee hurts at mile 18"* — **predict the subset first**, then check the DISPATCH lines.
+
+_Excerpt from the file you just cloned — read it, don't paste it; you run it with the command above._
 
 <ql-code-block language="python">
 # The factory's mode parameter is THE variable this level teaches:
@@ -573,6 +581,8 @@ python -m L4b_recursion.deep_research
 </ql-code-block>
 
 ![L4b flow](img/diagram-l4b.png)
+
+_Excerpt from the file you just cloned — read it, don't paste it; you run it with the command above._
 
 <ql-code-block language="python">
 @node(parallel_worker=True, rerun_on_resume=True)
