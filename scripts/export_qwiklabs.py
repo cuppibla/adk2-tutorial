@@ -164,14 +164,24 @@ def main() -> None:
         elif title.startswith("Setup & Authentication"):
             continue  # replaced by Christina's Cloud Shell Task 1
         elif title.startswith("Congratulations"):
-            out.append(transform_step(title, body, task_no, None)); task_no += 1
+            step = transform_step(title, body, task_no, None); task_no += 1
+            anchor = "### Next steps\n"
+            assert anchor in step
+            step = step.replace(anchor, anchor + "\n"
+                "- **Take it home:** your lab project is temporary, but the same tutorial "
+                "runs as a zero-setup [Colab notebook]"
+                "(https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb) "
+                "— re-run any level anytime (uses your own free AI Studio key, unlike this lab).\n", 1)
+            out.append(step)
         else:
             k = KEY(title)
             out.append(transform_step(title, body, task_no, k)); task_no += 1
 
     en = "\n".join(out)
-    # lab has no Colab: point stray notebook mentions at the repo path instead
-    assert "colab.research.google.com" not in en, "Colab link leaked into the lab"
+    # During the lab students stay on the provisioned project — the ONLY Colab
+    # link allowed is the take-home pointer injected into Congratulations.
+    n_colab = en.count("colab.research.google.com")
+    assert n_colab == 1, f"expected exactly 1 Colab link (the take-home), found {n_colab}"
 
     inst = OUT / "instructions"
     if (inst / "img").exists():

@@ -720,6 +720,8 @@ You built a Marathon Race Day Coach and, along the way, all three of ADK 2's orc
 
 ### Next steps
 
+- **Take it home:** your lab project is temporary, but the same tutorial runs as a zero-setup [Colab notebook](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb) — re-run any level anytime (uses your own free AI Studio key, unlike this lab).
+
 - Run the full app these levels were distilled from — the **Marathon Race Day Coach**, a FastAPI + SSE build with a browser UI showing all three modes live: [github.com/cuppibla/adk-2-marathon-demo](https://github.com/cuppibla/adk-2-marathon-demo).
 - Go wider: [**adk-workflows-compared**](https://github.com/cuppibla/adk-workflows-compared) — all 23 official ADK 2 workflow samples, each with a 1.x port and when-to-use guidance. Start with [`docs/three-pillars.md`](https://github.com/cuppibla/adk-workflows-compared/blob/main/docs/three-pillars.md), then the things this lab skipped: [`07_loop`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/07_loop), [`17_request_input`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/17_request_input), [`22_agent_in_workflow`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/22_agent_in_workflow).
 - Port your **own** problem: which parts are known-structure (L2), known-team (L3a/L3b), unknown-shape (L4)?
