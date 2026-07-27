@@ -187,8 +187,13 @@ def main() -> None:
     if (inst / "img").exists():
         shutil.rmtree(inst / "img")
     (inst / "img").mkdir(parents=True, exist_ok=True)
+    # Ship only what en.md references — codelab/img keeps assets this lab does
+    # not use (e.g. the retired architecture diagram), and orphan binaries in a
+    # published lab are just weight nobody can trace.
+    used = set(re.findall(r"\(img/([^)]+)\)", en))
     for p in sorted((ROOT / "codelab" / "img").glob("*.png")):
-        shutil.copy2(p, inst / "img" / p.name)
+        if p.name in used:
+            shutil.copy2(p, inst / "img" / p.name)
     (inst / "en.md").write_text(en)
     shutil.copy2(TPL / "qwiklabs.yaml", OUT / "qwiklabs.yaml")
     shutil.copy2(TPL / "QL_OWNER", OUT / "QL_OWNER")
