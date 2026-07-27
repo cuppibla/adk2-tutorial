@@ -23,9 +23,11 @@ ADK 2's headline is **three orchestration patterns**. This lab teaches all three
 
 ### What you'll build
 
-One app — a **Marathon Race Day Coach** — that shows all three orchestration patterns. Everything runs behind a FastAPI + SSE backend; each level below is one piece of it.
+One app — a **Marathon Race Day Coach** — assembled one runnable level at a time. Every level is a plain Python module you run from the terminal; by L5 the pieces below are all yours.
 
-![Marathon Race Day Coach — architecture](img/diagram-arch.png)
+The picture is **drawn from the running code**: every solid line was read out of `Workflow.graph.edges`. Which is the first lesson — the parts that *can* be drawn ahead of time are exactly Pillar 1, and the parts that can't are why Pillars 2 and 3 exist.
+
+![The whole app — and what a graph can't show you](img/diagram-whole.png)
 
 ### What you'll need
 
@@ -651,6 +653,18 @@ This is **not** "2.0 can do things 1.x couldn't" — 1.x could build all of it. 
 | **Collaborative** | buildable via `AgentTool` plumbing; `ParallelAgent` always-all, `transfer_to_agent` serial | a **declared** team: `sub_agents` + `mode="single_turn"` |
 | **Dynamic** | recursion drops you out of the framework | `parallel_worker` + recursive `ctx.run_node` inside the framework |
 
+### The whole app, and what a graph can't show you
+
+You have now built every piece below. `Workflow` exposes its structure at `graph.edges`, so this picture is **generated from the code** rather than drawn by hand — and what the introspection finds *is* the summary of this lab:
+
+| Pillar | What `graph.edges` contains | Why |
+| --- | --- | --- |
+| **1 · Graph** (L2b) | **10 edges**, routes and all | you drew it before any input arrived |
+| **2 · Collaborative** (L3a) | **0 edges** — only `sub_agents` + `mode` | the LLM picks the subset per request |
+| **3 · Dynamic** (L4a/L4b) | **3 edges — identical in both** | the recursion is written in Python, not wired in the graph |
+
+That last row is the proof for the question L4b answers: L4a and L4b have the *same* graph, and only one of them recurses.
+
 ### What you can build now
 
 Each pattern you just ran is a real product shape:
@@ -665,6 +679,10 @@ Each pattern you just ran is a real product shape:
 ### They compose
 
 The three patterns are **not mutually exclusive**. A graph node can call a collaborative coordinator; a specialist can launch a dynamic workflow. Choose the right pattern per *part* of the problem — that's how you avoid turning every agent system into one giant prompt.
+
+![The whole app — and what a graph can't show you](img/diagram-whole.png)
+
+> 💡 **Try it on your own workflow:** the script that drew this is [`scripts/graph_dump.py`](https://github.com/cuppibla/adk2-tutorial/blob/main/scripts/graph_dump.py). Point it at any `Workflow` and it will print the real edges — a free structural diagram of anything you build.
 
 ## Task 12. Congratulations
 
