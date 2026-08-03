@@ -38,8 +38,18 @@ The picture is **drawn from the running code**: every solid line was read out of
 ### What you'll need
 
 - A Google account (for Colab) — **no local setup required**.
-- A free **Google AI Studio** API key: [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
 - ~50 minutes (the two L4 levels are the long ones — budget them).
+- One of two ways to reach a Gemini model. **Pick your lane** — you run *one* setup step and skip the other:
+
+| | 🎓 **Workshop** | 🏠 **Take-home** |
+| --- | --- | --- |
+| **Who** | You're at a live workshop and the instructor gave you a **credit claim link** | Everyone else — including workshop attendees, afterwards |
+| **You need** | The claim link, and a Google account that can create a Cloud project | A free [AI Studio API key](https://aistudio.google.com/app/apikey) |
+| **Runs on** | Vertex AI, in a project billed to your workshop credit | Google AI Studio |
+| **Cost** | Covered by the credit | Free tier |
+| **Setup step** | **Workshop setup** (next step) | **Take-home setup** (the step after) |
+
+Everything from the Prologue onward is **identical** either way — the lane only decides which model endpoint the notebook talks to.
 
 > aside positive
 > **The mental model to hold onto:** *Predictable work stays as functions; clear rules become explicit routing; reasoning uses the model.* Every level is a variation on that one sentence.
@@ -51,10 +61,130 @@ Every step below maps to **one cell in the Colab notebook** and **one folder in 
 - **▶ Colab (recommended):** [Open the notebook](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb) → run cells top to bottom.
 - **💻 Local:** `git clone` the [repo](https://github.com/cuppibla/adk2-tutorial), `./setup_venv.sh`, then run each level as a module (`python -m …`) or browse them all with `./run.sh` (`adk web`).
 
-## Setup & Authentication
+## Workshop setup · Claim your credit and switch to Vertex AI
+Duration: 8
+
+> aside positive
+> **This step is only for live-workshop attendees.** Following along on your own? Skip straight to **Take-home setup** — a free AI Studio key, no Cloud project, no billing. You run **one** of the two setup steps, never both.
+
+At the workshop you're given **Google Cloud credit**. You'll claim it, create a project billed to it, and point the notebook at **Vertex AI** instead of AI Studio. One cell does everything after the claim.
+
+### 1 · Claim your credit  *(~1 min)*
+
+1. Open the **claim link** your instructor shared. It looks like `https://me.developers.google.com/benefits/claim/your-workshop-name`.
+2. Sign in and follow the page through to accept the credit.
+3. **Note which Google account you used.** Every step below has to run as that same account.
+
+> aside negative
+> **One account, start to finish.** If you claim the credit as `you@gmail.com` but sign into Colab as `you@work.com`, the setup cell won't find the credit — it stops with a message saying exactly that, and names the account it actually saw.
+
+### 2 · Open the notebook and install ADK 2  *(~1 min)*
+
+Click **[Open in Colab ▶](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb)**, then run the **first code cell**. It pins the exact ADK 2 version this codelab was verified on and prints `✓ installed`.
+
+> aside positive
+> New to Colab? A **cell** is a block of code. Click it and press **Shift+Enter** (or the ▶ button on its left) to run it. Run them **in order** from the top.
+
+### 3 · Run the "Workshop setup" cell  *(~3 min)*
+
+This is the cell titled **🎓 Path A · Workshop**. Run it and Colab will ask you to authorize — choose **the same Google account you just claimed the credit with**, and allow access.
+
+<!-- cell:workshop -->
+```python
+# 🎓 WORKSHOP ONLY — run this INSTEAD of the AI Studio key cell below.
+# Prereq: claim your credit first, using the SAME Google account you sign in with here.
+import os, subprocess, sys
+
+PROJECT_ID = ""            # leave blank to create one automatically
+LOCATION   = "us-central1"
+
+from google.colab import auth
+auth.authenticate_user()                          # also authenticates the gcloud CLI
+acct = subprocess.run(["gcloud", "auth", "list", "--filter=status:ACTIVE",
+                       "--format=value(account)"],
+                      capture_output=True, text=True).stdout.strip()
+print(f"Signed in as: {acct}\n", flush=True)   # flush: Colab's stdout is not a tty,
+                                               # so unflushed prints land AFTER subprocess output
+
+if not PROJECT_ID:
+    REPO = "/content/adk2-tutorial"
+    if not os.path.isdir(REPO):
+        subprocess.run(["git", "clone", "-q",
+                        "https://github.com/cuppibla/adk2-tutorial.git", REPO], check=True)
+    # Finds your GDP credit, creates adk-2-tutorial-XXXX, links it, writes ~/project_id.txt
+    rc = subprocess.run([sys.executable, f"{REPO}/scripts/billing_enablement.py"]).returncode
+    pid_file = os.path.expanduser("~/project_id.txt")
+    if rc != 0 or not os.path.exists(pid_file):
+        raise SystemExit(
+            f"\n✋ Couldn't create the project automatically.\n"
+            f"   Most likely the credit isn't claimed yet, or it was claimed on an\n"
+            f"   account other than {acct}.\n"
+            f"   → Claim it, wait ~30s, then re-run this cell.\n"
+            f"   → Still stuck? Open https://shell.cloud.google.com and run:\n"
+            f"        git clone https://github.com/cuppibla/adk2-tutorial.git\n"
+            f"        cd adk2-tutorial && ./setup_billing.sh\n"
+            f"     then paste the project ID into PROJECT_ID above and re-run this cell."
+        )
+    PROJECT_ID = open(pid_file).read().strip()
+
+subprocess.run(["gcloud", "config", "set", "project", PROJECT_ID, "--quiet"], check=True)
+subprocess.run(["gcloud", "services", "enable",
+                "aiplatform.googleapis.com", "--quiet"], check=True)
+
+# Point ADK at Vertex AI instead of AI Studio.
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
+os.environ["GOOGLE_CLOUD_PROJECT"]      = PROJECT_ID
+os.environ["GOOGLE_CLOUD_LOCATION"]     = LOCATION
+os.environ["ADK_MODEL"]                 = "gemini-2.5-flash"   # gemini-flash-latest is AI-Studio-only
+os.environ.pop("GOOGLE_API_KEY", None)                         # make sure no stale key wins
+os.environ.pop("GEMINI_API_KEY", None)
+
+print(f"\n✅ Vertex AI on {PROJECT_ID} · {LOCATION} · gemini-2.5-flash", flush=True)
+```
+<!-- /cell:workshop -->
+
+**Expected output** — the last line is what matters:
+
+```
+Signed in as: you@example.com
+...
+Successfully created GCP project 'adk-2-tutorial-4817'.
+Successfully linked 'adk-2-tutorial-4817' to billing account '01ABCD-...'.
+✅ Vertex AI on adk-2-tutorial-4817 · us-central1 · gemini-2.5-flash
+```
+
+What the cell just did: created a project called `adk-2-tutorial-XXXX`, linked it to your credit, enabled the **Vertex AI API** on it, and set the four environment variables every later cell reads (`GOOGLE_GENAI_USE_VERTEXAI`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `ADK_MODEL`).
+
+> aside negative
+> **`✋ Couldn't create the project automatically`?** Nothing is broken — the cell stopped on purpose. Ninety percent of the time the credit simply isn't claimed on the account it printed. Claim it, wait ~30 seconds, re-run. If your account genuinely can't create projects (common on corporate `@company.com` accounts, where an admin restricts it), create the project any other way — or in [Cloud Shell](https://shell.cloud.google.com) with `./setup_billing.sh` — then paste its ID into `PROJECT_ID` at the top of the cell and re-run.
+
+> aside negative
+> **Runtime disconnected, or you restarted the session?** Environment variables don't survive that. Re-run this cell — it's safe to run repeatedly. Because `~/project_id.txt` is already written it will reuse your existing project rather than creating a second one. (If Colab wiped the file too, paste your project ID into `PROJECT_ID` first.)
+
+### 4 · Skip the "Take-home setup" step
+
+Do **not** run the AI Studio key cell — it would switch the notebook back to AI Studio and undo what you just did. (The cell guards against this and will refuse to run, but the tidier move is simply to skip it.) Go straight from here to the **Shared building blocks** cell.
+
+### 5 · Run the "Shared building blocks" cell
+
+Run it once. It defines the Pydantic schemas + canned marathon scenarios that every level from L2 onward reuses. You'll see `✓ schemas + scenarios ready`.
+
+> aside positive
+> **Why the model name changes.** The take-home path uses `gemini-flash-latest`, an alias that only exists on AI Studio — on Vertex AI it 404s. The workshop cell sets `ADK_MODEL=gemini-2.5-flash` instead, and every level reads that variable, so nothing else in the codelab changes. If you ever see `✗ ADK_MODEL=... is an AI-Studio-only alias`, that guard is what's talking.
+
+### After the workshop
+
+Your credit and the project it created won't last forever. To keep re-running these levels for free once the workshop is over, run the **Take-home setup** step instead — a free AI Studio key, no Cloud project, no billing. That one cell is the only thing that changes.
+
+To clean up sooner: open the [Cloud console](https://console.cloud.google.com/cloud-resource-manager), select `adk-2-tutorial-XXXX`, and delete it. Nothing else in this codelab creates billable resources.
+
+## Take-home setup · AI Studio API key
 Duration: 5
 
-Everything runs on a free **Google AI Studio** API key — no Google Cloud project, no billing, no local install. This whole step is ~3 minutes.
+> aside positive
+> **At a live workshop with a credit link?** You've already done the previous step — skip this one entirely and go to the **Prologue**. Running both switches the notebook back to AI Studio.
+
+Everything on this path runs on a free **Google AI Studio** API key — no Google Cloud project, no billing, no local install. This whole step is ~3 minutes.
 
 ### 1 · Open the notebook
 
@@ -103,8 +233,13 @@ Wait for it to finish — you'll see `✓ installed`. (The install takes ~30–6
 
 It reads the secret (or falls back to the paste prompt), then points ADK at **AI Studio** (not Vertex AI):
 
+<!-- cell:apikey -->
 ```python
 import os
+
+# 🏠 TAKE-HOME ONLY — if you ran the Workshop setup cell, skip this one.
+if os.environ.get("GOOGLE_GENAI_USE_VERTEXAI") == "True":
+    raise SystemExit("✋ You're set up on the workshop path (Vertex AI). Skip this cell.")
 
 # Google AI Studio API key — add GOOGLE_API_KEY in the 🔑 Secrets panel (or paste when prompted).
 try:
@@ -118,6 +253,7 @@ os.environ["GOOGLE_API_KEY"] = "".join(key.split())    # drop any stray whitespa
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"      # use AI Studio, not Vertex AI
 print("✅ API key set — using Google AI Studio.")
 ```
+<!-- /cell:apikey -->
 
 **Expected output:** `✅ API key set — using Google AI Studio.`
 
@@ -728,3 +864,6 @@ You built a Marathon Race Day Coach and, along the way, all three of ADK 2's orc
 - Go wider: [**adk-workflows-compared**](https://github.com/cuppibla/adk-workflows-compared) — all 23 official ADK 2 workflow samples, each with a 1.x port and when-to-use guidance. Start with [`docs/three-pillars.md`](https://github.com/cuppibla/adk-workflows-compared/blob/main/docs/three-pillars.md), then the things this codelab skipped: [`07_loop`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/07_loop), [`17_request_input`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/17_request_input), [`22_agent_in_workflow`](https://github.com/cuppibla/adk-workflows-compared/tree/main/examples/22_agent_in_workflow).
 - Port your **own** problem: which parts are known-structure (L2), known-team (L3a/L3b), unknown-shape (L4)?
 - Explore the code: [github.com/cuppibla/adk2-tutorial](https://github.com/cuppibla/adk2-tutorial).
+<!-- codelab-only -->
+- **Came through the workshop?** Your credit — and the project it created — won't last forever. To keep re-running these levels for free, do the **Take-home setup** step instead: a free AI Studio key, no Cloud project, no billing. Swapping that one cell is the only change.
+<!-- /codelab-only -->

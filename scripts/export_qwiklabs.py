@@ -15,7 +15,11 @@ Lab-specific divergences (everything else flows from the source):
   - Task 1 is Christina's Cloud Shell + Vertex AI setup, preserved as a
     template (qwiklabs/_templates/task1.md) + `export ADK_MODEL=gemini-2.5-flash`
     because the AI-Studio alias gemini-flash-latest 404s on Vertex.
-  - Our "Setup & Authentication" step (Colab/AI-Studio) is dropped in its favor.
+  - BOTH codelab setup lanes are dropped in its favor: "Workshop setup" (GDP
+    credit -> your own project) and "Take-home setup" (Colab/AI-Studio). A
+    Qwiklabs student needs neither — Start Lab already handed them a project.
+  - Anything the codelab wraps in <!-- codelab-only --> is stripped, for prose
+    that only makes sense when those two lanes exist.
   - Every level's Colab/GitHub/Local link row becomes a "Run it" bash block —
     the v1 lab never told students to run anything; this fixes that.
 
@@ -106,9 +110,21 @@ def run_block(step_key: str) -> str:
     return f"### Run it\n\nIn Cloud Shell, from the `adk2-tutorial` directory:\n\n{blocks}"
 
 
+def strip_codelab_only(text: str) -> str:
+    """Drop <!-- codelab-only --> ... <!-- /codelab-only --> regions.
+
+    The codelab has two setup lanes (workshop credit / take-home AI Studio key);
+    this lab has neither, so prose that refers to them is removed rather than
+    rewritten into something half-true.
+    """
+    return re.sub(r"<!-- codelab-only -->\n.*?<!-- /codelab-only -->\n?", "",
+                  text, flags=re.S)
+
+
 def transform_step(title: str, body: str, task_no: int, step_key: str | None) -> str:
     body = re.sub(r"^Duration: \d+\n", "", body, flags=re.M)
     body = re.sub(r"^<!-- /?beat:\w+ -->\n", "", body, flags=re.M)
+    body = strip_codelab_only(body)
     # the Colab/GitHub/Local row (levels) or bare Local row (prologue) -> Run it
     link_row = re.compile(r"^(?:▶ \*\*Colab:\*\*|💻 \*\*Local:\*\*).*$", re.M)
     if step_key and step_key in RUN_COMMANDS:
@@ -126,7 +142,10 @@ def transform_step(title: str, body: str, task_no: int, step_key: str | None) ->
 
 def transform_overview(body: str) -> str:
     body = re.sub(r"^Duration: \d+\n", "", body, flags=re.M)
-    # lab-appropriate "What you'll need"
+    body = strip_codelab_only(body)
+    # lab-appropriate "What you'll need" — this replacement also swallows the
+    # codelab's workshop-vs-take-home lane table, which lives under the same
+    # heading precisely so it never has to be stripped separately.
     body = re.sub(
         r"### What you'll need\n.*?(?=\n> aside|\n### )",
         "### What you'll need\n\n"
@@ -155,14 +174,16 @@ def main() -> None:
 
     out = [f"# {LAB_TITLE}\n\n## adk2001\n\n![[/fragments/labmanuallogo]]\n"]
     task_no = 2  # Task 1 is the preserved environment setup
+    skipped = 0
     for title, body in steps:
         if title.startswith("Overview"):
             out.append(transform_overview(body))
             t1 = (TPL / "task1.md").read_text()
             t1 = "\n".join(l for l in t1.split("\n") if not l.startswith("<!--"))
             out.append(t1.strip() + "\n")
-        elif title.startswith("Setup & Authentication"):
-            continue  # replaced by Christina's Cloud Shell Task 1
+        elif title.startswith(("Workshop setup", "Take-home setup")):
+            skipped += 1
+            continue  # both replaced by Christina's Cloud Shell Task 1
         elif title.startswith("Congratulations"):
             step = transform_step(title, body, task_no, None); task_no += 1
             anchor = "### Next steps\n"
@@ -178,6 +199,11 @@ def main() -> None:
             out.append(transform_step(title, body, task_no, k)); task_no += 1
 
     en = "\n".join(out)
+    # Rename a setup step in the codelab and it would silently ship here as an
+    # extra task telling a Qwiklabs student to go claim credit. Fail instead.
+    assert skipped == 2, (
+        f"expected to drop 2 codelab setup steps, dropped {skipped} — did a "
+        "'Workshop setup' / 'Take-home setup' heading get renamed?")
     # During the lab students stay on the provisioned project — the ONLY Colab
     # link allowed is the take-home pointer injected into Congratulations.
     n_colab = en.count("colab.research.google.com")

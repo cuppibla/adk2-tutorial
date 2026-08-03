@@ -106,6 +106,23 @@ def extract_beats(text):
 BEATS = extract_beats(read("codelab/adk2-orchestration.md"))
 
 
+def extract_fence(text, name):
+    """Pull a ```python fence marked <!-- cell:NAME --> out of the codelab.
+
+    Same single-source rule as the beats, applied to the two setup cells. They
+    are the only notebook code with no module to generate from (they configure
+    Colab itself), so the codelab fence is their home — otherwise the same ~40
+    lines live in two files and drift the first time one is edited.
+    """
+    m = re.search(rf"<!-- cell:{name} -->\n```python\n(.*?)```\n<!-- /cell:{name} -->",
+                  text, re.S)
+    assert m, f"no <!-- cell:{name} --> python fence found in the codelab"
+    return m.group(1).strip()
+
+
+CELLS = read("codelab/adk2-orchestration.md")
+
+
 def check_excerpt_drift():
     """Every def/Agent/Workflow name shown in a codelab python excerpt must
     exist in the real modules — this is what caught the l1_workflow ghost."""
@@ -179,39 +196,51 @@ If you have questions about this notebook, reach me on [LinkedIn](https://www.li
 ```""", "author"))
 
 cells.append(md("""---
-## 🔑 Part 0 · Setup & Authentication
+## 🔑 Part 0 · Setup — pick your path
 
-First things first — let's get your gear on! 🎽 This step installs the exact ADK 2 version the tutorial was verified on, then wires up your **Google AI Studio** API key.
+First things first — let's get your gear on! 🎽 Run the install cell below, then **one** of the two setup cells after it. Never both.
 
-1. 👉 Get a free key at **[aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)** — click *Create API key*, copy it (starts with `AIza…`).
-2. 🔑 In Colab, click the **Secrets** icon (left sidebar) → *Add new secret* → name it **`GOOGLE_API_KEY`**, paste the value, and toggle **Notebook access ON**.
-3. Run the two cells below.""", "setup"))
+| | 🎓 **Workshop** | 🏠 **Take-home** |
+| --- | --- | --- |
+| **Who** | You're at a live workshop with a **credit claim link** | Everyone else — including workshop attendees, afterwards |
+| **Runs on** | Vertex AI, on a project billed to your credit | Google AI Studio (free tier) |
+| **Run** | the 🎓 cell | the 🏠 cell |
+
+Everything from the Prologue onward is identical either way.""", "setup"))
 
 cells.append(code('''# Pin the exact ADK 2 version this tutorial was verified on.
 %pip install -q "google-adk==2.3.0" python-dotenv pydantic nest_asyncio
 import nest_asyncio; nest_asyncio.apply()   # let Colab's running loop accept nested awaits
 print("\\u2713 installed")''', "install"))
 
-cells.append(code('''import os
+cells.append(md("""---
+### 🎓 Path A · Workshop (Google Cloud credit)
 
-# Google AI Studio API key — add GOOGLE_API_KEY in the 🔑 Secrets panel (or paste when prompted).
-try:
-    from google.colab import userdata
-    key = userdata.get("GOOGLE_API_KEY")
-except Exception:
-    import getpass
-    key = getpass.getpass("Enter your Google AI Studio API key: ")
+**Only if you're at a live workshop.** First claim your credit at the link your instructor shared (`https://me.developers.google.com/benefits/claim/…`) — using the **same Google account** you'll authorize below. Then run this cell and **skip Path B**.
 
-os.environ["GOOGLE_API_KEY"] = "".join(key.split())   # drop ALL whitespace/newlines (not just the ends)
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"     # use AI Studio, not Vertex AI
-print("\\u2705 API key set \\u2014 using Google AI Studio.")''', "apikey"))
+It creates a project on your credit, enables the Vertex AI API, and points the notebook at Vertex.""", "workshop_md"))
+
+cells.append(code(extract_fence(CELLS, "workshop"), "workshop"))
+
+cells.append(md("""---
+### 🏠 Path B · Take-home (AI Studio key)
+
+**The default — and where workshop attendees come back to afterwards.** Get a free key at **[aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)** (click *Create API key*, copy it — starts with `AIza…`), then in Colab click the **🔑 Secrets** icon in the left sidebar → *Add new secret* → name it exactly **`GOOGLE_API_KEY`**, paste the value, toggle **Notebook access ON**.
+
+Ran Path A already? **Skip this cell** — it would switch you back to AI Studio.""", "takehome_md"))
+
+cells.append(code(extract_fence(CELLS, "apikey"), "apikey"))
 
 # Shared cell — generated from shared/schemas.py + shared/scenarios.py
 shared_src = (
     "# Generated from shared/schemas.py + shared/scenarios.py by notebooks/build.py.\n"
     '# (No `from __future__ import annotations` — deferred string annotations break\n'
     "#  pydantic forward-refs for nested models in a single notebook namespace.)\n"
-    'MODEL = "gemini-flash-latest"\n\n'
+    # Every level cell redefines MODEL the same way; this one exists so the
+    # shared cell stands alone. Read the env var here too — a level added later
+    # that forgets to redefine it must not silently 404 on the workshop path.
+    'import os\n'
+    'MODEL = os.getenv("ADK_MODEL", "gemini-flash-latest")\n\n'
     + module_to_cell(read("shared/schemas.py")) + "\n\n"
     + module_to_cell(read("shared/scenarios.py")) + "\n\n"
     'print("\\u2713 schemas + scenarios ready")'

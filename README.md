@@ -75,15 +75,35 @@ Always run levels as **modules from the repo root** (`python -m L2b_router.workf
 ## Quickstart — Colab
 
 1. Open [`notebooks/adk2_orchestration.ipynb`](notebooks/adk2_orchestration.ipynb) in Colab (badge above, or upload it).
-2. Runtime has no key — add yours via **🔑 Secrets** as `GOOGLE_API_KEY` (the first cell reads it), or paste it when prompted.
-3. Run cells top to bottom. Each level is one runnable cell with a markdown explainer above it.
+2. Run the install cell, then **one** of the two setup cells (see below).
+3. Run the rest top to bottom. Each level is one runnable cell with a markdown explainer above it.
+
+### Two setup paths — run one, skip the other
+
+|  | 🎓 **Workshop** | 🏠 **Take-home** |
+| --- | --- | --- |
+| **Who** | Live workshop, instructor gave out a credit claim link | Everyone else — including workshop attendees, afterwards |
+| **Cell** | `🎓 Path A · Workshop` | `🏠 Path B · Take-home` |
+| **Auth** | Claim credit → the cell creates a project on it | Free [AI Studio key](https://aistudio.google.com/apikey) in **🔑 Secrets** as `GOOGLE_API_KEY` |
+| **Backend** | Vertex AI, `ADK_MODEL=gemini-2.5-flash` | AI Studio, `gemini-flash-latest` |
+| **Local `.env`** | [`.env.workshop.example`](.env.workshop.example) | [`.env.example`](.env.example) |
+
+The workshop cell runs [`scripts/billing_enablement.py`](scripts/billing_enablement.py) (finds the
+`[YYYY-MM-DD] GDP Credit:` billing account, creates `adk-2-tutorial-XXXX`, links it), then enables
+`aiplatform.googleapis.com` — **which that script does not do** — and sets the four Vertex env vars.
+Every level reads `ADK_MODEL` from the environment, so the lane is the only thing that changes.
+
+Can't create a project (corporate account, or the credit isn't visible)? Set `PROJECT_ID` at the top
+of the workshop cell to an existing credited project and it skips creation entirely.
+
+The Path B cell refuses to run if Path A already configured Vertex, so the two can't silently fight.
 
 ---
 
 ## What runs the model
 
 - **Package:** `google-adk==2.3.0` (latest stable; every level was verified on it — see note below).
-- **Model:** `gemini-flash-latest`.
+- **Model:** `gemini-flash-latest` on AI Studio; `gemini-2.5-flash` on Vertex AI (the alias is AI-Studio-only and 404s there — every level reads `ADK_MODEL` and guards against the mismatch).
 - **Cost:** L0–L2b are cheap (0–1 model call each). L3a makes ~6–10 across its two beats; L3b ~4. **L4a is 5–9 calls; L4b is 5–30 per run** — run those deliberately.
 
 > **Version note.** Verified on **2.3.0** and on 2.0.0b1. Every API this tutorial uses (`Workflow(edges=...)`, `JoinNode`, `@node(parallel_worker=True)`, `Agent(sub_agents=..., mode="single_turn")`) behaves identically on both.
