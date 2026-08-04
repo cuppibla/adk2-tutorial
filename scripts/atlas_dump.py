@@ -59,15 +59,22 @@ def tool_name(t):
 def level_entry(mod, obj):
     o = getattr(importlib.import_module(mod), obj)
     g = getattr(o, "graph", None)
+    subs = [{"name": s.name, "mode": getattr(s, "mode", None)}
+            for s in (getattr(o, "sub_agents", None) or [])]
+    sub_names = {s["name"] for s in subs}
     entry = {
         "object": obj,
         "name": getattr(o, "name", None),
         "type": type(o).__name__,
         # null vs [] is meaningful: Pillar 2 has NO graph object, not an empty one
         "graph": None,
-        "sub_agents": [{"name": s.name, "mode": getattr(s, "mode", None)}
-                       for s in (getattr(o, "sub_agents", None) or [])],
-        "tools": [tool_name(t) for t in (getattr(o, "tools", None) or [])],
+        "sub_agents": subs,
+        # ADK mirrors single_turn/task sub_agents into .tools (that is HOW the
+        # coordinator can call them). The atlas keeps the two ideas separate:
+        # "tools" here means plain function tools the author passed, and the
+        # mirroring itself is asserted below rather than silently duplicated.
+        "tools": [n for t in (getattr(o, "tools", None) or [])
+                  if (n := tool_name(t)) not in sub_names],
     }
     if g is not None:
         entry["graph"] = {
@@ -124,6 +131,10 @@ def main():
     assert lv["P"]["tools"] == [], "the prologue mega-coach acquired a tool — its lesson is that it has none"
     assert {s["mode"] for s in lv["L3a"]["sub_agents"]} == {"single_turn"}
     assert [s["mode"] for s in lv["L3b"]["sub_agents"]] == ["task"]
+    # after excluding the sub_agent mirror, Pillar 2 coordinators own no tools
+    assert lv["L3a"]["tools"] == [] and lv["L3b"]["tools"] == [], (
+        "a Pillar-2 coordinator grew a plain function tool — the map draws only "
+        "sub_agents for these levels and would hide it")
 
     OUT.write_text(json.dumps(atlas, indent=2) + "\n")
     print(f"wrote {OUT.relative_to(ROOT)}")

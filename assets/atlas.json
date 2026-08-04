@@ -240,14 +240,7 @@
           "mode": "single_turn"
         }
       ],
-      "tools": [
-        "medical_specialist",
-        "weather_specialist",
-        "pacing_specialist",
-        "gear_specialist",
-        "nutrition_specialist",
-        "mental_specialist"
-      ]
+      "tools": []
     },
     "L3b": {
       "object": "race_desk",
@@ -260,9 +253,7 @@
           "mode": "task"
         }
       ],
-      "tools": [
-        "gear_fitter"
-      ]
+      "tools": []
     },
     "L4a": {
       "object": "l4a_workflow",
