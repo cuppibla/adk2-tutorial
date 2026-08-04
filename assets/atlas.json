@@ -1,0 +1,356 @@
+{
+  "_generated_by": "scripts/atlas_dump.py \u2014 do not edit by hand",
+  "levels": {
+    "P": {
+      "object": "mega_coach",
+      "name": "mega_coach",
+      "type": "LlmAgent",
+      "graph": null,
+      "sub_agents": [],
+      "tools": []
+    },
+    "L0": {
+      "object": "pace_coach",
+      "name": "pace_coach",
+      "type": "LlmAgent",
+      "graph": null,
+      "sub_agents": [],
+      "tools": [
+        "pace_splits"
+      ]
+    },
+    "L1": {
+      "object": "workflow",
+      "name": "l1_graph_basics",
+      "type": "Workflow",
+      "graph": {
+        "nodes": [
+          {
+            "id": "__START__",
+            "kind": "start"
+          },
+          {
+            "id": "fetch_conditions",
+            "kind": "fn"
+          },
+          {
+            "id": "advise",
+            "kind": "agent"
+          }
+        ],
+        "edges": [
+          {
+            "from": "__START__",
+            "to": "fetch_conditions"
+          },
+          {
+            "from": "fetch_conditions",
+            "to": "advise"
+          }
+        ]
+      },
+      "sub_agents": [],
+      "tools": []
+    },
+    "L2a": {
+      "object": "root",
+      "name": "l2a_parallel_join",
+      "type": "Workflow",
+      "graph": {
+        "nodes": [
+          {
+            "id": "__START__",
+            "kind": "start"
+          },
+          {
+            "id": "fetch_weather",
+            "kind": "fn"
+          },
+          {
+            "id": "join_inputs",
+            "kind": "join"
+          },
+          {
+            "id": "analyze_course",
+            "kind": "fn"
+          },
+          {
+            "id": "pull_fitness",
+            "kind": "fn"
+          },
+          {
+            "id": "strategy",
+            "kind": "agent"
+          }
+        ],
+        "edges": [
+          {
+            "from": "__START__",
+            "to": "fetch_weather"
+          },
+          {
+            "from": "fetch_weather",
+            "to": "join_inputs"
+          },
+          {
+            "from": "__START__",
+            "to": "analyze_course"
+          },
+          {
+            "from": "analyze_course",
+            "to": "join_inputs"
+          },
+          {
+            "from": "__START__",
+            "to": "pull_fitness"
+          },
+          {
+            "from": "pull_fitness",
+            "to": "join_inputs"
+          },
+          {
+            "from": "join_inputs",
+            "to": "strategy"
+          }
+        ]
+      },
+      "sub_agents": [],
+      "tools": []
+    },
+    "L2b": {
+      "object": "root",
+      "name": "marathon_strategy",
+      "type": "Workflow",
+      "graph": {
+        "nodes": [
+          {
+            "id": "__START__",
+            "kind": "start"
+          },
+          {
+            "id": "fetch_weather",
+            "kind": "fn"
+          },
+          {
+            "id": "join_inputs",
+            "kind": "join"
+          },
+          {
+            "id": "analyze_course",
+            "kind": "fn"
+          },
+          {
+            "id": "pull_fitness",
+            "kind": "fn"
+          },
+          {
+            "id": "route_by_weather",
+            "kind": "fn"
+          },
+          {
+            "id": "hot_strategy",
+            "kind": "agent"
+          },
+          {
+            "id": "normal_strategy",
+            "kind": "agent"
+          },
+          {
+            "id": "cold_strategy",
+            "kind": "agent"
+          }
+        ],
+        "edges": [
+          {
+            "from": "__START__",
+            "to": "fetch_weather"
+          },
+          {
+            "from": "fetch_weather",
+            "to": "join_inputs"
+          },
+          {
+            "from": "__START__",
+            "to": "analyze_course"
+          },
+          {
+            "from": "analyze_course",
+            "to": "join_inputs"
+          },
+          {
+            "from": "__START__",
+            "to": "pull_fitness"
+          },
+          {
+            "from": "pull_fitness",
+            "to": "join_inputs"
+          },
+          {
+            "from": "join_inputs",
+            "to": "route_by_weather"
+          },
+          {
+            "from": "route_by_weather",
+            "to": "hot_strategy",
+            "route": "HOT"
+          },
+          {
+            "from": "route_by_weather",
+            "to": "normal_strategy",
+            "route": "NORMAL"
+          },
+          {
+            "from": "route_by_weather",
+            "to": "cold_strategy",
+            "route": "COLD"
+          }
+        ]
+      },
+      "sub_agents": [],
+      "tools": []
+    },
+    "L3a": {
+      "object": "race_concierge",
+      "name": "race_concierge",
+      "type": "LlmAgent",
+      "graph": null,
+      "sub_agents": [
+        {
+          "name": "medical_specialist",
+          "mode": "single_turn"
+        },
+        {
+          "name": "weather_specialist",
+          "mode": "single_turn"
+        },
+        {
+          "name": "pacing_specialist",
+          "mode": "single_turn"
+        },
+        {
+          "name": "gear_specialist",
+          "mode": "single_turn"
+        },
+        {
+          "name": "nutrition_specialist",
+          "mode": "single_turn"
+        },
+        {
+          "name": "mental_specialist",
+          "mode": "single_turn"
+        }
+      ],
+      "tools": [
+        "medical_specialist",
+        "weather_specialist",
+        "pacing_specialist",
+        "gear_specialist",
+        "nutrition_specialist",
+        "mental_specialist"
+      ]
+    },
+    "L3b": {
+      "object": "race_desk",
+      "name": "race_desk",
+      "type": "LlmAgent",
+      "graph": null,
+      "sub_agents": [
+        {
+          "name": "gear_fitter",
+          "mode": "task"
+        }
+      ],
+      "tools": [
+        "gear_fitter"
+      ]
+    },
+    "L4a": {
+      "object": "l4a_workflow",
+      "name": "l4a_flat_research",
+      "type": "Workflow",
+      "graph": {
+        "nodes": [
+          {
+            "id": "__START__",
+            "kind": "start"
+          },
+          {
+            "id": "decompose",
+            "kind": "fn"
+          },
+          {
+            "id": "research_topic",
+            "kind": "fn"
+          },
+          {
+            "id": "synthesize",
+            "kind": "fn"
+          }
+        ],
+        "edges": [
+          {
+            "from": "__START__",
+            "to": "decompose"
+          },
+          {
+            "from": "decompose",
+            "to": "research_topic"
+          },
+          {
+            "from": "research_topic",
+            "to": "synthesize"
+          }
+        ]
+      },
+      "sub_agents": [],
+      "tools": []
+    },
+    "L4b": {
+      "object": "l4b_workflow",
+      "name": "deep_research",
+      "type": "Workflow",
+      "graph": {
+        "nodes": [
+          {
+            "id": "__START__",
+            "kind": "start"
+          },
+          {
+            "id": "decompose",
+            "kind": "fn"
+          },
+          {
+            "id": "research_topic",
+            "kind": "fn"
+          },
+          {
+            "id": "synthesize",
+            "kind": "fn"
+          }
+        ],
+        "edges": [
+          {
+            "from": "__START__",
+            "to": "decompose"
+          },
+          {
+            "from": "decompose",
+            "to": "research_topic"
+          },
+          {
+            "from": "research_topic",
+            "to": "synthesize"
+          }
+        ]
+      },
+      "sub_agents": [],
+      "tools": []
+    }
+  },
+  "bounds": {
+    "fan_min": 3,
+    "fan_max": 7,
+    "child_max": 3,
+    "max_depth": 2
+  }
+}
