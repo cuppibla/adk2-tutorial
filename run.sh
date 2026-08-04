@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
-# Launch the ADK web UI to browse every level (L0…L4b) as an agent, the same way
-# as the adk_tutorial repo. Each folder re-exports `root_agent` so `adk web`
-# discovers it. (For the instructive per-level output — parallel timing, the
-# recursion trace — use the CLI runners instead, e.g. `python -m L2b_router.workflow`.)
+# Launch the ADK web UI to click through every level (L0…L4b) in a browser.
+#
+# It serves `webapps/`, not the repo root. Those are thin adapters over the real
+# levels — they let the chat box choose the scenario and they surface the
+# teaching output (parallel timestamps, the router's branch, the recursion
+# trace) that the levels print to stdout, which a browser never sees. Pointed at
+# the repo root instead, `adk web` gives you a chat box that ignores what you
+# type, a scenario stuck on HOT, and `shared/` in the dropdown as a broken
+# entry. See webapps/README.md.
+#
+# The CLI runners are still the real teaching surface:
+#     python -m L2b_router.workflow COLD
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -15,6 +23,7 @@ fi
 mkdir -p "$HOME/.adk/sessions"
 DB_URI="sqlite:///$HOME/.adk/sessions/adk_web_sessions.db"
 
-echo "🚀 Launching ADK web UI — browse L0…L4b as agents"
+echo "🚀 ADK web UI — 8 levels, click through them in the browser"
 echo "   → http://localhost:8080"
-adk web --session_service_uri "$DB_URI" --host localhost --port 8080 --reload
+echo "   pick a level from the dropdown (top-left); what to type in each: webapps/README.md"
+adk web webapps --session_service_uri "$DB_URI" --host localhost --port 8080 --reload

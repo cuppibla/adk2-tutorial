@@ -50,11 +50,20 @@ git clone https://github.com/cuppibla/adk2-tutorial.git && cd adk2-tutorial
 
 There are **two ways to run locally** (they use the same code):
 
-**A) Browse everything in the ADK web UI** — like the [`adk_tutorial`](https://github.com/cuppibla/adk_tutorial) repo. Each level folder re-exports `root_agent`, so `adk web` lists them all.
+**A) Click through everything in the ADK web UI** — 8 levels in a browser, no terminal output to read.
 ```bash
 ./run.sh                   # → http://localhost:8080, pick a level from the dropdown
 ```
-> Only the **`L0…L4b`** folders (including `L3a`/`L3b`) are runnable agents. `shared/`, `notebooks/`, `codelab/`, `L5_capstone/` may also appear in the dropdown but aren't agents.
+Then type into the chat box. What to type in each level, and what you should see, is
+**[`webapps/README.md`](webapps/README.md)** — start with `L2b_weather_router`, type `COLD`,
+then run it again with `HOT` and watch the router take the other branch.
+
+> `./run.sh` serves [`webapps/`](webapps/), not the repo root. Those are thin adapters over the
+> real levels: they let the chat box choose the scenario and they surface the teaching output
+> the levels `print()`, which a browser never sees. Pointed at the repo root, `adk web` gives you
+> a chat box that ignores what you type (L1/L2 run with `new_message=None`), a scenario stuck on
+> HOT, and `shared/` in the dropdown as an entry that errors when picked. The levels themselves
+> are untouched — see [`webapps/README.md`](webapps/README.md#why-this-layer-exists).
 
 **B) Run one level with its teaching output** — the parallel timing, the router branch, the recursion trace. This is the recommended way to *learn* each pattern, and it mirrors the Colab cells 1:1.
 ```bash
@@ -138,7 +147,8 @@ L5_capstone/             # decision tree + 1.x-vs-2 + composition (reading)
 codelab/                 # the claat codelab that wraps the notebook
 notebooks/               # the Colab notebook + build.py (generates it from the modules)
 setup_venv.sh / .bat     # create venv + install deps + .env  (Mac/Linux · Windows)
-run.sh                   # launch the ADK web UI (adk web) to browse all levels
+webapps/                 # thin adapters that make the levels clickable in `adk web`
+run.sh                   # launch the ADK web UI (adk web webapps) on :8080
 ```
 
 Each `LX/__init__.py` re-exports its main node as `root_agent` (`from .workflow import root as root_agent`) — that's what lets `adk web` discover it, matching the `adk_tutorial` layout.
