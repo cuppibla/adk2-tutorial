@@ -111,10 +111,11 @@ BEATS = extract_beats(read("codelab/adk2-orchestration.md"))
 def extract_fence(text, name):
     """Pull a ```python fence marked <!-- cell:NAME --> out of the codelab.
 
-    Same single-source rule as the beats, applied to the two setup cells. They
-    are the only notebook code with no module to generate from (they configure
-    Colab itself), so the codelab fence is their home — otherwise the same ~40
-    lines live in two files and drift the first time one is edited.
+    Same single-source rule as the beats, applied to a setup cell the codelab
+    prints in full. Those cells have no module to generate from (they configure
+    Colab itself), so the fence the reader sees IS the source — otherwise the
+    same lines live in two files and drift the first time one is edited. Cells
+    the codelab does *not* print live in notebooks/*_cell.py instead.
     """
     m = re.search(rf"<!-- cell:{name} -->\n```python\n(.*?)```\n<!-- /cell:{name} -->",
                   text, re.S)
@@ -254,7 +255,10 @@ Everything from the Prologue onward is identical either way.""", "setup"),
 **Only if you're at a live workshop.** First claim your credit at the link your instructor shared (`https://me.developers.google.com/benefits/claim/…`) — using the **same Google account** you'll authorize below. Then run this cell and **skip Path B**.
 
 It creates a project on your credit, enables the Vertex AI API, and points the notebook at Vertex.""", "workshop_md"),
-    code(extract_fence(CELLS, "workshop"), "workshop"),
+    # Not a codelab fence: at ~70 lines this is too long to print in the
+    # codelab, which just tells the reader to run the cell. So it lives in a
+    # real file — readable, greppable, and still one source.
+    code(read("notebooks/workshop_setup_cell.py").strip(), "workshop"),
     md("""---
 ### 🏠 Path B · Take-home (AI Studio key)
 

@@ -89,59 +89,7 @@ Click **[Open in Colab ▶](https://colab.research.google.com/github/cuppibla/ad
 
 This is the cell titled **🎓 Path A · Workshop**. Run it and Colab will ask you to authorize — choose **the same Google account you just claimed the credit with**, and allow access.
 
-<!-- cell:workshop -->
-```python
-# 🎓 WORKSHOP ONLY — run this INSTEAD of the AI Studio key cell below.
-# Prereq: claim your credit first, using the SAME Google account you sign in with here.
-import os, subprocess, sys
-
-PROJECT_ID = ""            # leave blank to create one automatically
-LOCATION   = "us-central1"
-
-from google.colab import auth
-auth.authenticate_user()                          # also authenticates the gcloud CLI
-acct = subprocess.run(["gcloud", "auth", "list", "--filter=status:ACTIVE",
-                       "--format=value(account)"],
-                      capture_output=True, text=True).stdout.strip()
-print(f"Signed in as: {acct}\n", flush=True)   # flush: Colab's stdout is not a tty,
-                                               # so unflushed prints land AFTER subprocess output
-
-if not PROJECT_ID:
-    REPO = "/content/adk2-tutorial"
-    if not os.path.isdir(REPO):
-        subprocess.run(["git", "clone", "-q",
-                        "https://github.com/cuppibla/adk2-tutorial.git", REPO], check=True)
-    # Finds your GDP credit, creates adk-2-tutorial-XXXX, links it, writes ~/project_id.txt
-    rc = subprocess.run([sys.executable, f"{REPO}/scripts/billing_enablement.py"]).returncode
-    pid_file = os.path.expanduser("~/project_id.txt")
-    if rc != 0 or not os.path.exists(pid_file):
-        raise SystemExit(
-            f"\n✋ Couldn't create the project automatically.\n"
-            f"   Most likely the credit isn't claimed yet, or it was claimed on an\n"
-            f"   account other than {acct}.\n"
-            f"   → Claim it, wait ~30s, then re-run this cell.\n"
-            f"   → Still stuck? Open https://shell.cloud.google.com and run:\n"
-            f"        git clone https://github.com/cuppibla/adk2-tutorial.git\n"
-            f"        cd adk2-tutorial && ./setup_billing.sh\n"
-            f"     then paste the project ID into PROJECT_ID above and re-run this cell."
-        )
-    PROJECT_ID = open(pid_file).read().strip()
-
-subprocess.run(["gcloud", "config", "set", "project", PROJECT_ID, "--quiet"], check=True)
-subprocess.run(["gcloud", "services", "enable",
-                "aiplatform.googleapis.com", "--quiet"], check=True)
-
-# Point ADK at Vertex AI instead of AI Studio.
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
-os.environ["GOOGLE_CLOUD_PROJECT"]      = PROJECT_ID
-os.environ["GOOGLE_CLOUD_LOCATION"]     = LOCATION
-os.environ["ADK_MODEL"]                 = "gemini-2.5-flash"   # gemini-flash-latest is AI-Studio-only
-os.environ.pop("GOOGLE_API_KEY", None)                         # make sure no stale key wins
-os.environ.pop("GEMINI_API_KEY", None)
-
-print(f"\n✅ Vertex AI on {PROJECT_ID} · {LOCATION} · gemini-2.5-flash", flush=True)
-```
-<!-- /cell:workshop -->
+It does four things: creates a project called `adk-2-tutorial-XXXX` on your credit, enables the **Vertex AI API** on it, sets the four environment variables every later cell reads, and then **makes a test call to Vertex and waits until it answers** — so setup either finishes working or tells you why, rather than failing later inside a level.
 
 **Expected output** — the last line is what matters:
 
@@ -150,13 +98,20 @@ Signed in as: you@example.com
 ...
 Successfully created GCP project 'adk-2-tutorial-4817'.
 Successfully linked 'adk-2-tutorial-4817' to billing account '01ABCD-...'.
-✅ Vertex AI on adk-2-tutorial-4817 · us-central1 · gemini-2.5-flash
+   waiting for Vertex AI to come up on the new project… (10s)
+   waiting for Vertex AI to come up on the new project… (20s)
+
+✅ Vertex AI on adk-2-tutorial-4817 · us-central1 · gemini-2.5-flash — answered a test call
 ```
 
-What the cell just did: created a project called `adk-2-tutorial-XXXX`, linked it to your credit, enabled the **Vertex AI API** on it, and set the four environment variables every later cell reads (`GOOGLE_GENAI_USE_VERTEXAI`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `ADK_MODEL`).
+> aside positive
+> **Those `waiting…` lines are normal.** A project created seconds ago isn't ready to serve yet — the API enablement and your owner permission both take a minute or two to propagate. The cell keeps trying for two minutes, so usually you just watch it. Seeing none of those lines is fine too; it means the project woke up on the first try.
 
 > aside negative
 > **`✋ Couldn't create the project automatically`?** Nothing is broken — the cell stopped on purpose. Ninety percent of the time the credit simply isn't claimed on the account it printed. Claim it, wait ~30 seconds, re-run. If your account genuinely can't create projects (common on corporate `@company.com` accounts, where an admin restricts it), create the project any other way — or in [Cloud Shell](https://shell.cloud.google.com) with `./setup_billing.sh` — then paste its ID into `PROJECT_ID` at the top of the cell and re-run.
+
+> aside negative
+> **`403 Permission 'aiplatform.endpoints.predict' denied` in a later cell?** That's the propagation window, and it means you're running an older copy of this notebook — the current setup cell waits it out for you. Re-open the notebook from the link above, or just re-run the setup cell and give it a minute. It is *not* a billing or credit problem: the project and the credit link were both already confirmed by the time you saw this.
 
 > aside negative
 > **Runtime disconnected, or you restarted the session?** Environment variables don't survive that. Re-run this cell — it's safe to run repeatedly. Because `~/project_id.txt` is already written it will reuse your existing project rather than creating a second one. (If Colab wiped the file too, paste your project ID into `PROJECT_ID` first.)
