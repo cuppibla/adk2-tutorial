@@ -254,7 +254,11 @@ Everything from the Prologue onward is identical either way.""", "setup"),
 
 **Only if you're at a live workshop.** First claim your credit at the link your instructor shared (`https://me.developers.google.com/benefits/claim/…`) — using the **same Google account** you'll authorize below. Then run this cell and **skip Path B**.
 
-It creates a project on your credit, enables the Vertex AI API, and points the notebook at Vertex.""", "workshop_md"),
+It creates a project on your credit, enables the Vertex AI API, points the notebook at Vertex, and then calls Vertex once to make sure it actually answers before you go on.
+
+> ⚠️ **Expect `waiting for Vertex AI to come up…` to print a couple of times.** That's normal — a project created seconds ago isn't allowed to serve yet, so the cell waits for it (up to 2 minutes).
+>
+> **And if any later cell ever fails with `403 … 'aiplatform.endpoints.predict' denied`** — that's the same waking-up window, *not* a billing or credit problem. Your project and credit are fine. Just **re-run this cell** and give it another minute.""", "workshop_md"),
     # Not a codelab fence: at ~70 lines this is too long to print in the
     # codelab, which just tells the reader to run the cell. So it lives in a
     # real file — readable, greppable, and still one source.
