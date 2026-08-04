@@ -3,7 +3,9 @@
 The runnable `L*/` modules are the source. This script transforms each into a
 self-contained notebook cell (strips package imports, `load_dotenv`, and the
 `__main__` block; inlines the shared schemas as one early cell; appends a
-top-level `await` driver), then writes notebooks/adk2_orchestration.ipynb.
+top-level `await` driver), then writes BOTH notebooks/adk2_orchestration.ipynb (legacy, take-home only,
+frozen to match the published codelab) and adk2_orchestration_workshop.ipynb
+(adds the 🎓 workshop credit lane).
 
 Each cell gets a stable `metadata.id` so the codelab can deep-link to it via
 `...ipynb#scrollTo=<id>`.
@@ -195,7 +197,45 @@ If you have questions about this notebook, reach me on [LinkedIn](https://www.li
   /づ  🏃   Enjoy building AI Agents — now go run your marathon! :)
 ```""", "author"))
 
-cells.append(md("""---
+INSTALL = code('''# Pin the exact ADK 2 version this tutorial was verified on.
+%pip install -q "google-adk==2.3.0" python-dotenv pydantic nest_asyncio
+import nest_asyncio; nest_asyncio.apply()   # let Colab's running loop accept nested awaits
+print("\\u2713 installed")''', "install")
+
+# ── The setup region is the ONLY thing the two notebooks disagree about ──────
+# adk2_orchestration.ipynb backs the ALREADY-PUBLISHED codelab, which walks the
+# reader through these cells by name. So its setup region is frozen verbatim —
+# a take-home reader must never meet a 🎓 cell nobody told them about. Levels
+# and shared/ still regenerate from the modules for both notebooks; only this
+# region is pinned. When the workshop codelab replaces the published one, this
+# legacy list and the two-notebook split can both go.
+LEGACY_SETUP = [
+    md("""---
+## 🔑 Part 0 · Setup & Authentication
+
+First things first — let's get your gear on! 🎽 This step installs the exact ADK 2 version the tutorial was verified on, then wires up your **Google AI Studio** API key.
+
+1. 👉 Get a free key at **[aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)** — click *Create API key*, copy it (starts with `AIza…`).
+2. 🔑 In Colab, click the **Secrets** icon (left sidebar) → *Add new secret* → name it **`GOOGLE_API_KEY`**, paste the value, and toggle **Notebook access ON**.
+3. Run the two cells below.""", "setup"),
+    INSTALL,
+    code('''import os
+
+# Google AI Studio API key — add GOOGLE_API_KEY in the 🔑 Secrets panel (or paste when prompted).
+try:
+    from google.colab import userdata
+    key = userdata.get("GOOGLE_API_KEY")
+except Exception:
+    import getpass
+    key = getpass.getpass("Enter your Google AI Studio API key: ")
+
+os.environ["GOOGLE_API_KEY"] = "".join(key.split())   # drop ALL whitespace/newlines (not just the ends)
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"     # use AI Studio, not Vertex AI
+print("\\u2705 API key set \\u2014 using Google AI Studio.")''', "apikey"),
+]
+
+WORKSHOP_SETUP = [
+    md("""---
 ## 🔑 Part 0 · Setup — pick your path
 
 First things first — let's get your gear on! 🎽 Run the install cell below, then **one** of the two setup cells after it. Never both.
@@ -206,50 +246,53 @@ First things first — let's get your gear on! 🎽 Run the install cell below, 
 | **Runs on** | Vertex AI, on a project billed to your credit | Google AI Studio (free tier) |
 | **Run** | the 🎓 cell | the 🏠 cell |
 
-Everything from the Prologue onward is identical either way.""", "setup"))
-
-cells.append(code('''# Pin the exact ADK 2 version this tutorial was verified on.
-%pip install -q "google-adk==2.3.0" python-dotenv pydantic nest_asyncio
-import nest_asyncio; nest_asyncio.apply()   # let Colab's running loop accept nested awaits
-print("\\u2713 installed")''', "install"))
-
-cells.append(md("""---
+Everything from the Prologue onward is identical either way.""", "setup"),
+    INSTALL,
+    md("""---
 ### 🎓 Path A · Workshop (Google Cloud credit)
 
 **Only if you're at a live workshop.** First claim your credit at the link your instructor shared (`https://me.developers.google.com/benefits/claim/…`) — using the **same Google account** you'll authorize below. Then run this cell and **skip Path B**.
 
-It creates a project on your credit, enables the Vertex AI API, and points the notebook at Vertex.""", "workshop_md"))
-
-cells.append(code(extract_fence(CELLS, "workshop"), "workshop"))
-
-cells.append(md("""---
+It creates a project on your credit, enables the Vertex AI API, and points the notebook at Vertex.""", "workshop_md"),
+    code(extract_fence(CELLS, "workshop"), "workshop"),
+    md("""---
 ### 🏠 Path B · Take-home (AI Studio key)
 
 **The default — and where workshop attendees come back to afterwards.** Get a free key at **[aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)** (click *Create API key*, copy it — starts with `AIza…`), then in Colab click the **🔑 Secrets** icon in the left sidebar → *Add new secret* → name it exactly **`GOOGLE_API_KEY`**, paste the value, toggle **Notebook access ON**.
 
-Ran Path A already? **Skip this cell** — it would switch you back to AI Studio.""", "takehome_md"))
+Ran Path A already? **Skip this cell** — it would switch you back to AI Studio.""", "takehome_md"),
+    code(extract_fence(CELLS, "apikey"), "apikey"),
+]
 
-cells.append(code(extract_fence(CELLS, "apikey"), "apikey"))
+SETUP_MARK = object()          # placeholder; swapped per notebook at write time
+cells.append(SETUP_MARK)
 
 # Shared cell — generated from shared/schemas.py + shared/scenarios.py
-shared_src = (
-    "# Generated from shared/schemas.py + shared/scenarios.py by notebooks/build.py.\n"
-    '# (No `from __future__ import annotations` — deferred string annotations break\n'
-    "#  pydantic forward-refs for nested models in a single notebook namespace.)\n"
-    # Every level cell redefines MODEL the same way; this one exists so the
-    # shared cell stands alone. Read the env var here too — a level added later
-    # that forgets to redefine it must not silently 404 on the workshop path.
-    'import os\n'
-    'MODEL = os.getenv("ADK_MODEL", "gemini-flash-latest")\n\n'
-    + module_to_cell(read("shared/schemas.py")) + "\n\n"
-    + module_to_cell(read("shared/scenarios.py")) + "\n\n"
-    'print("\\u2713 schemas + scenarios ready")'
-)
+def shared_src(model_line):
+    return (
+        "# Generated from shared/schemas.py + shared/scenarios.py by notebooks/build.py.\n"
+        '# (No `from __future__ import annotations` — deferred string annotations break\n'
+        "#  pydantic forward-refs for nested models in a single notebook namespace.)\n"
+        + model_line + "\n"
+        + module_to_cell(read("shared/schemas.py")) + "\n\n"
+        + module_to_cell(read("shared/scenarios.py")) + "\n\n"
+        'print("\\u2713 schemas + scenarios ready")'
+    )
+
+
+# Every level cell redefines MODEL the same way, so this one only matters if a
+# level ever forgets to. On the workshop notebook that omission would silently
+# 404 on Vertex, so there it reads the env var; the legacy notebook keeps the
+# published literal, since nothing in it can set ADK_MODEL anyway.
+SHARED_LEGACY = shared_src('MODEL = "gemini-flash-latest"\n')
+SHARED_WORKSHOP = shared_src('import os\nMODEL = os.getenv("ADK_MODEL", "gemini-flash-latest")\n')
+
 cells.append(md("""---
 ## 📦 Shared building blocks
 
 Structured I/O is how ADK 2 moves typed data between function nodes and agents — like passing a clean baton 🏃‍♀️➡️🏃. These Pydantic schemas + canned marathon scenarios are reused from L2 onward. **Run this cell once**, then keep going.""", "shared_md"))
-cells.append(code(shared_src, "shared"))
+SHARED_MARK = object()         # placeholder; swapped per notebook at write time
+cells.append(SHARED_MARK)
 
 # Prologue — the mega-prompt failure, run before the ladder.
 cells.append(md("---\n## 🎯 Prologue · Why Not One Big Prompt?\n\n" + BEATS["WHY"], "why_md"))
@@ -393,20 +436,44 @@ cells.append(md("---\n## 🧭 L5 · Which Pattern, When? (the finish line 🏁)\
 
 🐾 *Made with love by Annie — happy building!*""", "L5"))
 
-nb = {
-    "cells": cells,
-    "metadata": {
-        "colab": {"provenance": [], "toc_visible": True},
-        "kernelspec": {"display_name": "Python 3", "name": "python3"},
-        "language_info": {"name": "python"},
-    },
-    "nbformat": 4,
-    "nbformat_minor": 0,
-}
+def write(filename, setup, shared):
+    """Expand the two placeholders and write one notebook."""
+    out_cells = []
+    for c in cells:
+        if c is SETUP_MARK:
+            out_cells.extend(setup)
+        elif c is SHARED_MARK:
+            out_cells.append(code(shared, "shared"))
+        else:
+            out_cells.append(c)
+    nb = {
+        "cells": out_cells,
+        "metadata": {
+            "colab": {"provenance": [], "toc_visible": True},
+            "kernelspec": {"display_name": "Python 3", "name": "python3"},
+            "language_info": {"name": "python"},
+        },
+        "nbformat": 4,
+        "nbformat_minor": 0,
+    }
+    p = ROOT / "notebooks" / filename
+    p.write_text(json.dumps(nb, indent=1))
+    print(f"wrote {p.relative_to(ROOT)} — {len(out_cells)} cells "
+          f"({sum(1 for c in out_cells if c['cell_type']=='code')} code, "
+          f"{sum(1 for c in out_cells if c['cell_type']=='markdown')} md)")
+    print("  ids:", [c["metadata"]["id"] for c in out_cells][:9], "…")
+    return out_cells
 
-out = ROOT / "notebooks" / "adk2_orchestration.ipynb"
-out.write_text(json.dumps(nb, indent=1))
-print(f"wrote {out.relative_to(ROOT)} — {len(cells)} cells "
-      f"({sum(1 for c in cells if c['cell_type']=='code')} code, "
-      f"{sum(1 for c in cells if c['cell_type']=='markdown')} md)")
-print("cell ids:", [c["metadata"]["id"] for c in cells])
+
+# Two notebooks, one source. The legacy file backs the published codelab and
+# must keep showing exactly the cells that codelab names; the workshop file is
+# what the new codelab links. Everything below the setup region is shared.
+legacy = write("adk2_orchestration.ipynb", LEGACY_SETUP, SHARED_LEGACY)
+workshop = write("adk2_orchestration_workshop.ipynb", WORKSHOP_SETUP, SHARED_WORKSHOP)
+
+lids, wids = [c["metadata"]["id"] for c in legacy], [c["metadata"]["id"] for c in workshop]
+assert "workshop" not in lids, "the legacy notebook must not contain the workshop cell"
+assert wids[:8] == ["intro", "author", "setup", "install", "workshop_md",
+                    "workshop", "takehome_md", "apikey"], f"unexpected workshop order: {wids[:8]}"
+assert lids == [i for i in wids if i not in ("workshop_md", "workshop", "takehome_md")], \
+    "the two notebooks must differ ONLY by the three workshop-lane cells"

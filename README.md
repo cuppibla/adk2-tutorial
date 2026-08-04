@@ -2,7 +2,7 @@
 
 > Learn ADK 2's **three orchestration patterns** — graph workflows, collaborative agents, dynamic workflows — one runnable rung at a time, all through a single **Marathon Race Day Coach**.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb)
 
 <!-- Loads notebooks/ straight from this repo, so it is always current. No manual Drive re-upload. -->
 
@@ -74,9 +74,22 @@ Always run levels as **modules from the repo root** (`python -m L2b_router.workf
 
 ## Quickstart — Colab
 
-1. Open [`notebooks/adk2_orchestration.ipynb`](notebooks/adk2_orchestration.ipynb) in Colab (badge above, or upload it).
+1. Open [`notebooks/adk2_orchestration_workshop.ipynb`](notebooks/adk2_orchestration_workshop.ipynb) in Colab (badge above, or upload it).
 2. Run the install cell, then **one** of the two setup cells (see below).
 3. Run the rest top to bottom. Each level is one runnable cell with a markdown explainer above it.
+
+### Two notebooks, one source
+
+| File | Setup it offers | Linked from |
+| --- | --- | --- |
+| [`adk2_orchestration_workshop.ipynb`](notebooks/adk2_orchestration_workshop.ipynb) | 🎓 Workshop credit **and** 🏠 AI Studio key | the current codelab, the badge above |
+| [`adk2_orchestration.ipynb`](notebooks/adk2_orchestration.ipynb) | 🏠 AI Studio key only | the already-published codelab + the Qwiklabs lab |
+
+`notebooks/build.py` writes both from the same cell list; they differ **only** by the three
+workshop-lane cells, and the build asserts that. The legacy file stays frozen because the
+published codelab walks its reader through those cells by name — someone following it must
+never meet a 🎓 cell nobody told them about. When the workshop codelab replaces the published
+one, the legacy file and the split can both go.
 
 ### Two setup paths — run one, skip the other
 

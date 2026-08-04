@@ -58,7 +58,7 @@ Everything from the Prologue onward is **identical** either way — the lane onl
 
 Every step below maps to **one cell in the Colab notebook** and **one folder in the GitHub repo**. Pick either:
 
-- **▶ Colab (recommended):** [Open the notebook](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb) → run cells top to bottom.
+- **▶ Colab (recommended):** [Open the notebook](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb) → run cells top to bottom.
 - **💻 Local:** `git clone` the [repo](https://github.com/cuppibla/adk2-tutorial), `./setup_venv.sh`, then run each level as a module (`python -m …`) or browse them all with `./run.sh` (`adk web`).
 
 ## Workshop setup · Claim your credit and switch to Vertex AI
@@ -80,7 +80,7 @@ At the workshop you're given **Google Cloud credit**. You'll claim it, create a 
 
 ### 2 · Open the notebook and install ADK 2  *(~1 min)*
 
-Click **[Open in Colab ▶](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb)**, then run the **first code cell**. It pins the exact ADK 2 version this codelab was verified on and prints `✓ installed`.
+Click **[Open in Colab ▶](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb)**, then run the **first code cell**. It pins the exact ADK 2 version this codelab was verified on and prints `✓ installed`.
 
 > aside positive
 > New to Colab? A **cell** is a block of code. Click it and press **Shift+Enter** (or the ▶ button on its left) to run it. Run them **in order** from the top.
@@ -188,7 +188,7 @@ Everything on this path runs on a free **Google AI Studio** API key — no Googl
 
 ### 1 · Open the notebook
 
-Click **[Open in Colab ▶](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb)**. You'll land on the notebook — a markdown intro, then one runnable cell per level. You run cells top to bottom; each prints its own output right below it.
+Click **[Open in Colab ▶](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb)**. You'll land on the notebook — a markdown intro, then one runnable cell per level. You run cells top to bottom; each prints its own output right below it.
 
 > aside positive
 > New to Colab? A **cell** is a block of code. Click it and press **Shift+Enter** (or the ▶ button on its left) to run it. Run them **in order** from the top.
@@ -316,7 +316,7 @@ Duration: 4
 After the prologue this is the first repair: an LLM doing pace arithmetic in its head will happily be wrong — `pace_splits` is deterministic Python, so the numbers in the answer are **computed, not improvised**.
 <!-- /beat:L0 -->
 
-▶ **Colab:** run the [`L0` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L0) · 📁 **GitHub:** [`L0_first_agent/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L0_first_agent) · 💻 **Local:** `python -m L0_first_agent.agent`
+▶ **Colab:** run the [`L0` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb#scrollTo=L0) · 📁 **GitHub:** [`L0_first_agent/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L0_first_agent) · 💻 **Local:** `python -m L0_first_agent.agent`
 
 ![L0 flow](img/diagram-l0.png)
 
@@ -374,7 +374,7 @@ START ──► fetch_conditions (function, 0 LLM) ──► advise (agent, 1 LL
 ```
 <!-- /beat:L1 -->
 
-▶ **Colab:** run the [`L1` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L1) · 📁 **GitHub:** [`L1_graph_basics/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L1_graph_basics) · 💻 **Local:** `python -m L1_graph_basics.workflow`
+▶ **Colab:** run the [`L1` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb#scrollTo=L1) · 📁 **GitHub:** [`L1_graph_basics/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L1_graph_basics) · 💻 **Local:** `python -m L1_graph_basics.workflow`
 
 ![L1 flow](img/diagram-l1.png)
 
@@ -419,7 +419,7 @@ START ──► pull_fitness ───┘   (bundles)
 ```
 <!-- /beat:L2a -->
 
-▶ **Colab:** run the [`L2a` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L2a) · 📁 **GitHub:** [`L2a_parallel_join/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2a_parallel_join) · 💻 **Local:** `python -m L2a_parallel_join.workflow`
+▶ **Colab:** run the [`L2a` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb#scrollTo=L2a) · 📁 **GitHub:** [`L2a_parallel_join/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2a_parallel_join) · 💻 **Local:** `python -m L2a_parallel_join.workflow`
 
 ![L2a flow](img/diagram-l2a.png)
 
@@ -461,7 +461,7 @@ Duration: 4
 ```
 <!-- /beat:L2b -->
 
-▶ **Colab:** run the [`L2b` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L2b) — try `run("NORMAL")` / `run("COLD")` · 📁 **GitHub:** [`L2b_router/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2b_router) · 💻 **Local:** `python -m L2b_router.workflow COLD`
+▶ **Colab:** run the [`L2b` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb#scrollTo=L2b) — try `run("NORMAL")` / `run("COLD")` · 📁 **GitHub:** [`L2b_router/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L2b_router) · 💻 **Local:** `python -m L2b_router.workflow COLD`
 
 ![L2b flow](img/diagram-l2b.png)
 
@@ -508,7 +508,7 @@ Duration: 6
 **The shape:** a coordinator over six specialists (medical, weather, pacing, gear, nutrition, mental). This level runs the **same team twice** — same coordinator prompt, same six specialists. The only difference is one flag on the subagents. **The contrast is the lesson.**
 <!-- /beat:L3a -->
 
-▶ **Colab:** run the [`L3a` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L3a) · 📁 **GitHub:** [`L3a_collaborative/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L3a_collaborative) · 💻 **Local:** `python -m L3a_collaborative.concierge --mode chat "What about fueling?"`
+▶ **Colab:** run the [`L3a` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb#scrollTo=L3a) · 📁 **GitHub:** [`L3a_collaborative/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L3a_collaborative) · 💻 **Local:** `python -m L3a_collaborative.concierge --mode chat "What about fueling?"`
 
 ![L3a flow](img/diagram-l3a.png)
 
@@ -594,7 +594,7 @@ race_desk (coordinator)
 ```
 <!-- /beat:L3b -->
 
-▶ **Colab:** run the [`L3b` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L3b) · 📁 **GitHub:** [`L3b_task_desk/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L3b_task_desk) · 💻 **Local:** `python -m L3b_task_desk.desk`
+▶ **Colab:** run the [`L3b` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb#scrollTo=L3b) · 📁 **GitHub:** [`L3b_task_desk/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L3b_task_desk) · 💻 **Local:** `python -m L3b_task_desk.desk`
 
 ![L3b flow](img/diagram-l3b.png)
 
@@ -669,7 +669,7 @@ An open-ended question is **decomposed** into N sub-questions — **N is chosen 
 > This cell makes **5–9 live LLM calls** (1 decompose + 3–7 research + 1 synthesize) and takes **~20–30s**. It costs real API quota.
 <!-- /beat:L4a -->
 
-▶ **Colab:** run the [`L4a` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L4a) · 📁 **GitHub:** [`L4a_flat_research/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4a_flat_research) · 💻 **Local:** `python -m L4a_flat_research.deep_research`
+▶ **Colab:** run the [`L4a` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb#scrollTo=L4a) · 📁 **GitHub:** [`L4a_flat_research/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4a_flat_research) · 💻 **Local:** `python -m L4a_flat_research.deep_research`
 
 ![L4a flow](img/diagram-l4a.png)
 
@@ -715,7 +715,7 @@ START ─► decompose ─► research_topic (parallel_worker, recursive) ─►
 > This cell makes **5–30 live LLM calls** and takes **20–45s** — the ceiling is 1 decompose + 7 top-level + 7×3 children + 1 synthesize. Run it deliberately.
 <!-- /beat:L4b -->
 
-▶ **Colab:** run the [`L4b` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration.ipynb#scrollTo=L4b) · 📁 **GitHub:** [`L4b_recursion/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4b_recursion) · 💻 **Local:** `python -m L4b_recursion.deep_research`
+▶ **Colab:** run the [`L4b` cell](https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb#scrollTo=L4b) · 📁 **GitHub:** [`L4b_recursion/`](https://github.com/cuppibla/adk2-tutorial/tree/main/L4b_recursion) · 💻 **Local:** `python -m L4b_recursion.deep_research`
 
 ![L4b flow](img/diagram-l4b.png)
 
